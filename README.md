@@ -106,6 +106,35 @@ This covers the core of your spec (real-time sync for appointments/notifications
 
 Happy to build out any of these next — the messaging UI and admin user-management table are probably the highest-value next additions.
 
+## Troubleshooting
+
+### "Failed to initialize database: ECONNREFUSED 127.0.0.1:5432" on Render
+
+This means `DATABASE_URL` isn't reaching your app — it's falling back to trying `localhost`, which doesn't exist on Render's servers. As of this version, the app will actually refuse to start with a clear message instead of this cryptic error, but if you're still on an older deploy, here's the fix:
+
+1. Make sure you've created a **Postgres database** on Render (New + → PostgreSQL → Free plan), separate from your web service.
+2. Open that database, copy the **Internal Database URL**.
+3. Go to your **web service** (not the database) → **Environment** tab → add `DATABASE_URL` with that value → **Save Changes**.
+4. Make sure the web service and database are in the **same region** — internal networking only works within a region.
+5. Trigger **Manual Deploy → Deploy latest commit** to make sure it picks up the change.
+6. Visit `https://your-app.onrender.com/api/health` — it now reports `"database": "connected"` when things are working, or the specific connection error if not.
+
+### Checking things quickly after any deploy
+
+Visit `/api/health` on your live URL. You should see:
+```json
+{"status":"ok","database":"connected","time":"..."}
+```
+If `database` shows an error instead, the message will tell you what's wrong (wrong region, bad credentials, database still provisioning, etc.) without needing to dig through build logs.
+
+### "Repository is empty" on first deploy
+
+This means no code was pushed to the GitHub repo Render is pointed at yet. Push your code first (`git init && git add . && git commit -m "..." && git push`), then redeploy.
+
+### Two services/environments and you're not sure which is which
+
+Check each service's **Environment** tab to see which one has `DATABASE_URL` set — that's the one to keep using. Delete the other from its **Settings** tab → **Delete Web Service**, to avoid confusion later.
+
 ## Deploying to Render (get a real public link)
 
 I can't create the Render account or click the deploy button for you — that part needs your login — but the repo is fully set up so it's a few clicks, and this version now includes a real Postgres database, so your data will actually persist.

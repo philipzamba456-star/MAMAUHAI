@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 
 const { JWT_SECRET } = require('./middleware/auth');
-const { init } = require('./db/database');
+const { init, pool } = require('./db/database');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const notificationRoutes = require('./routes/notifications');
@@ -48,7 +48,16 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/stats', statsRoutes);
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+app.get('/api/health', async (req, res) => {
+  let dbStatus = 'unknown';
+  try {
+    await pool.query('SELECT 1');
+    dbStatus = 'connected';
+  } catch (err) {
+    dbStatus = 'error: ' + err.message;
+  }
+  res.json({ status: 'ok', database: dbStatus, time: new Date().toISOString() });
+});
 
 const PORT = process.env.PORT || 4000;
 
