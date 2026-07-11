@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mama Uhai — Maternal Health Platform</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  :root{
+    --admin-1:#4c3fc9; --admin-2:#3730a3;
+    --doctor-1:#2e5df0; --doctor-2:#1e3fb8;
+    --mother-teal-1:#0f4c4a; --mother-teal-2:#0a3735;
+    --mother-red-1:#c0272d; --mother-red-2:#8f1d21;
+    --bg:#f4f5f9;
+    --card-border:#e7e8f0;
+    --text-dark:#1f2130;
+    --text-mid:#6b6f85;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Inter',sans-serif; background:var(--bg); color:var(--text-dark);}
+  h1,h2,h3{font-family:'Playfair Display', serif;}
+  a{text-decoration:none; color:inherit;}
+  button{font-family:inherit; cursor:pointer; border:none;}
+  ::selection{background:#c0272d33;}
+
+  /* ---------------- LOGIN SCREEN ---------------- */
+  #login-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+    background:
+      linear-gradient(rgba(10,10,14,.72), rgba(10,10,14,.8)),
+      radial-gradient(ellipse at 30% 20%, #2a1414 0%, #0a0a0d 60%);
+  }
+  #login-screen::before{
+    content:""; position:absolute; inset:0;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="none"/></svg>');
+    opacity:.15;
+  }
+  .login-wrap{position:relative; z-index:2; width:100%; max-width:460px; padding:24px; animation:fadeUp .6s ease both;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+  .login-logo{
+    width:64px; height:64px; border-radius:16px; background:linear-gradient(135deg,#d6363c,#8f1d21);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 18px;
+    box-shadow:0 10px 30px -8px rgba(192,39,45,.7);
+  }
+  .login-logo i{color:#fff; font-size:26px;}
+  .login-title{color:#fff; text-align:center; font-size:2.1rem; font-weight:700; letter-spacing:.3px;}
+  .login-sub{color:#cfc9c9; text-align:center; font-style:italic; font-size:.92rem; margin:10px auto 26px; max-width:340px; line-height:1.5;}
+  .login-card{background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 30px 60px -20px rgba(0,0,0,.6);}
+  .login-card-head{background:linear-gradient(135deg,#c0272d,#8f1d21); padding:20px 26px; text-align:center;}
+  .login-card-head h2{color:#fff; font-size:1.25rem; font-weight:700;}
+  .login-card-head p{color:#f6d7d8; font-size:.82rem; margin-top:4px;}
+  .login-card-body{padding:26px;}
+  .role-label{font-size:.82rem; font-weight:600; color:#444; margin-bottom:10px; display:block;}
+  .role-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px;}
+  .role-btn{
+    border:1.5px solid #e4e4ea; border-radius:10px; padding:12px 4px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:6px; background:#fff;
+    transition:.15s; font-size:.72rem; font-weight:600; color:#555;
+  }
+  .role-btn i{font-size:1.05rem; color:#8a8a95;}
+  .role-btn:hover{border-color:#c0272d55;}
+  .role-btn.active{background:#c0272d; border-color:#c0272d; color:#fff;}
+  .role-btn.active i{color:#fff;}
+  .field{margin-bottom:16px;}
+  .field label{font-size:.8rem; font-weight:600; color:#333; display:block; margin-bottom:6px;}
+  .input-wrap{position:relative;}
+  .input-wrap i{position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#8a8a95; font-size:.85rem;}
+  .input-wrap input{
+    width:100%; padding:11px 12px 11px 34px; border-radius:9px; border:1px solid #dfe1ec;
+    background:#eef1fb; font-size:.88rem; color:#222;
+  }
+  .input-wrap input:focus{outline:2px solid #c0272d55; background:#fff;}
+  .input-wrap .toggle-eye{left:auto; right:12px; cursor:pointer;}
+  .login-row{display:flex; justify-content:space-between; align-items:center; font-size:.78rem; margin-bottom:20px; color:#555;}
+  .login-row a{color:#c0272d; font-weight:600;}
+  .signin-btn{
+    width:100%; padding:12px; border-radius:9px; background:linear-gradient(135deg,#c0272d,#8f1d21);
+    color:#fff; font-weight:700; font-size:.92rem; box-shadow:0 10px 20px -8px rgba(192,39,45,.6);
+  }
+  .signin-btn:hover{filter:brightness(1.06);}
+
+  /* ---------------- APP SHELL ---------------- */
+  .app{display:none; min-height:100vh;}
+  .app.active{display:flex;}
+  .sidebar{
+    width:250px; min-width:250px; min-height:100vh; color:#fff; display:flex; flex-direction:column;
+    padding:22px 16px;
+  }
+  .sidebar-brand{display:flex; align-items:center; gap:10px; padding:6px 8px 22px;}
+  .sidebar-brand .icon{
+    width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.15); font-size:1.1rem;
+  }
+  .sidebar-brand .brand-text .name{font-family:'Playfair Display',serif; font-weight:700; font-size:1.08rem; line-height:1.1;}
+  .sidebar-brand .brand-text .role{font-size:.68rem; opacity:.75; margin-top:2px;}
+  .nav-item{
+    display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:9px; font-size:.85rem;
+    font-weight:500; opacity:.85; margin-bottom:2px; transition:.15s; cursor:pointer; background:transparent; width:100%; color:#fff;
+  }
+  .nav-item i{width:18px; text-align:center; font-size:.9rem;}
+  .nav-item:hover{background:rgba(255,255,255,.08); opacity:1;}
+  .nav-item.active{background:rgba(255,255,255,.22); opacity:1; font-weight:600;}
+  .sidebar-spacer{flex:1;}
+  .signout{
+    display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:9px; font-size:.85rem;
+    background:rgba(0,0,0,.18); color:#fff; font-weight:600; margin-top:10px;
+  }
+  .signout:hover{background:rgba(0,0,0,.3);}
+
+  .main{flex:1; padding:26px 32px 60px; min-width:0;}
+  .topbar{display:flex; justify-content:flex-end; align-items:center; gap:18px; margin-bottom:18px; font-size:1rem; color:#555;}
+  .topbar i{cursor:pointer;}
+  .topbar .avatar{
+    width:32px; height:32px; border-radius:50%; background:#c0272d; color:#fff; font-weight:700;
+    display:flex; align-items:center; justify-content:center; font-size:.85rem;
+  }
+  .topbar .who{font-size:.85rem; font-weight:600; color:#333;}
+
+  .hero{
+    border-radius:18px; padding:30px 34px; color:#fff; position:relative; overflow:hidden; margin-bottom:24px;
+  }
+  .hero::after{
+    content:""; position:absolute; right:-40px; top:-40px; width:220px; height:220px; border-radius:50%;
+    background:rgba(255,255,255,.08);
+  }
+  .hero::before{
+    content:""; position:absolute; right:60px; bottom:-60px; width:160px; height:160px; border-radius:50%;
+    background:rgba(255,255,255,.06);
+  }
+  .hero h1{font-size:1.65rem; font-weight:700; position:relative; z-index:1;}
+  .hero p{font-size:.92rem; opacity:.92; margin-top:8px; max-width:640px; position:relative; z-index:1;}
+  .hero .hero-actions{display:flex; gap:12px; margin-top:18px; position:relative; z-index:1;}
+  .hero-btn{
+    padding:10px 18px; border-radius:9px; background:rgba(255,255,255,.22); color:#fff; font-weight:600;
+    font-size:.85rem; display:flex; align-items:center; gap:8px; backdrop-filter:blur(4px);
+  }
+  .hero-btn:hover{background:rgba(255,255,255,.32);}
+
+  .stat-grid{display:grid; gap:18px; margin-bottom:30px;}
+  .stat-card{
+    border-radius:14px; padding:18px 20px; border:1px solid var(--card-border);
+  }
+  .stat-card i{font-size:1.3rem; margin-bottom:14px; display:block;}
+  .stat-card .num{font-family:'Playfair Display',serif; font-size:1.7rem; font-weight:800; margin-bottom:2px;}
+  .stat-card .label{font-size:.78rem; font-weight:500; color:var(--text-mid);}
+
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+  .panel-title{font-family:'Playfair Display',serif; font-weight:700; font-size:1.05rem; margin-bottom:14px;}
+  .panel-box{background:#fff; border-radius:14px; border:1px solid var(--card-border); padding:6px;}
+  .list-row{
+    display:flex; align-items:center; gap:14px; padding:14px; border-radius:10px; transition:.15s;
+  }
+  .list-row:hover{background:#f7f7fb;}
+  .list-row .li-icon{
+    width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:.95rem;
+  }
+  .list-row .li-text .t{font-weight:600; font-size:.86rem;}
+  .list-row .li-text .d{font-size:.75rem; color:var(--text-mid); margin-top:2px;}
+  .empty-state{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; padding:50px 20px; color:#9a9da8;
+  }
+  .empty-state i{font-size:1.6rem; margin-bottom:10px; opacity:.6;}
+  .empty-state span{font-size:.85rem;}
+  .view-all{font-size:.8rem; color:#4c3fc9; font-weight:600; text-align:center; display:block; padding:12px;}
+
+  /* quick action grid (mother) */
+  .qa-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px;}
+  .qa-card{
+    background:#fff; border:1px solid var(--card-border); border-radius:14px; padding:22px 12px;
+    display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;
+  }
+  .qa-card:hover{box-shadow:0 8px 24px -12px rgba(0,0,0,.15); transform:translateY(-2px);}
+  .qa-card .qi{width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.05rem;}
+  .qa-card .qt{font-size:.82rem; font-weight:600;}
+
+  .section-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .section-head .add-link{font-size:.82rem; color:#c0272d; font-weight:700;}
+
+  .tip-card{
+    background:linear-gradient(135deg,#fff8e8,#fef2d8); border:1px solid #f5e2ad; border-radius:14px; padding:16px 18px;
+    display:flex; gap:12px; align-items:flex-start; margin-top:16px;
+  }
+  .tip-card i{color:#c9962c; font-size:1.1rem; margin-top:2px;}
+  .tip-card .tt{font-weight:700; font-size:.82rem; margin-bottom:3px;}
+  .tip-card .td{font-size:.78rem; color:#6b5a2b;}
+
+  @media(max-width:1000px){
+    .two-col{grid-template-columns:1fr;}
+    .qa-grid{grid-template-columns:repeat(2,1fr);}
+    .stat-grid{grid-template-columns:repeat(2,1fr) !important;}
+  }
+  @media(max-width:720px){
+    .sidebar{position:fixed; z-index:50; transform:translateX(-100%); transition:.25s; height:100vh; overflow-y:auto;}
+    .sidebar.open{transform:translateX(0);}
+    .main{padding:20px 16px 50px;}
+    .role-grid{grid-template-columns:repeat(2,1fr);}
+  }
+  .menu-toggle{display:none;}
+  @media(max-width:720px){.menu-toggle{display:flex;}}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-logo"><i class="fa-solid fa-heart-pulse"></i></div>
+    <h1 class="login-title">Mama Uhai</h1>
+    <p class="login-sub">Welcome to Mama Uhai – Every Mother Deserves Safe, Dignified, and Supported Care.</p>
+
+    <div class="login-card">
+      <div class="login-card-head">
+        <h2>Sign In to Your Portal</h2>
+        <p>Select your role and enter your credentials</p>
+      </div>
+      <div class="login-card-body">
+        <span class="role-label">I am signing in as:</span>
+        <div class="role-grid" id="role-grid">
+          <button class="role-btn active" data-role="mother"><i class="fa-solid fa-heart-circle-check"></i>Mother</button>
+          <button class="role-btn" data-role="doctor"><i class="fa-solid fa-user-doctor"></i>Doctor</button>
+          <button class="role-btn" data-role="health"><i class="fa-solid fa-heart"></i>Health Worker</button>
+          <button class="role-btn" data-role="admin"><i class="fa-solid fa-shield-halved"></i>Administrator</button>
+        </div>
+
+        <div class="field">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <i class="fa-regular fa-envelope"></i>
+            <input type="email" id="login-email" placeholder="you@example.com">
+          </div>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="login-password" placeholder="••••••••">
+            <i class="fa-regular fa-eye toggle-eye" id="eye-toggle"></i>
+          </div>
+        </div>
+
+        <div class="login-row">
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox"> Remember me</label>
+          <a href="#">Forgot password?</a>
+        </div>
+
+        <div id="login-error" style="display:none;background:#fdeaea;color:#8f1d21;border:1px solid #f5c2c4;border-radius:8px;padding:9px 12px;font-size:.78rem;margin-bottom:14px;"></div>
+        <button class="signin-btn" id="signin-btn">Sign In</button>
+        <p style="text-align:center;font-size:.72rem;color:#999;margin-top:14px;">Demo logins: mother@mamauhai.app / mother123 · doctor@mamauhai.app / doctor123 · admin@mamauhai.app / admin123 (password: matching role123)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADMIN APP ================= -->
+<div class="app" id="app-admin">
+  <aside class="sidebar" style="background:linear-gradient(180deg,var(--admin-1),var(--admin-2));">
+    <div class="sidebar-brand">
+      <div class="icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="brand-text"><div class="name">Mama Uhai</div><div class="role">Admin Control Center</div></div>
+    </div>
+    <div class="nav-item active"><i class="fa-solid fa-table-cells"></i>Dashboard</div>
+    <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
+    <div class="nav-item"><i class="fa-solid fa-user-nurse"></i>Allocations</div>
+    <div class="nav-item"><i class="fa-solid fa-user-doctor"></i>Providers</div>
+    <div class="nav-item"><i class="fa-solid fa-user-gear"></i>User Mgmt</div>
+    <div class="nav-item"><i class="fa-regular fa-envelope"></i>Messages</div>
+    <div class="nav-item"><i class="fa-regular fa-circle-question"></i>Complaints</div>
+    <div class="sidebar-spacer"></div>
+    <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
+  </aside>
+  <main class="main">
+    <div class="hero" style="background:linear-gradient(120deg,var(--admin-1),var(--admin-2));">
+      <h1>Welcome, Administrator 👋</h1>
+      <p>Platform control center — manage providers, allocations, and monitor activity across the mothers' portal.</p>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card" style="background:#fdeaea;"><i class="fa-solid fa-users" style="color:#c0272d;"></i><div class="num" style="color:#c0272d;" id="stat-total_mothers">0</div><div class="label">Total Mothers</div></div>
+      <div class="stat-card" style="background:#e9f0fe;"><i class="fa-solid fa-user-doctor" style="color:#2e5df0;"></i><div class="num" style="color:#2e5df0;" id="stat-total_doctors">0</div><div class="label">Total Doctors</div></div>
+      <div class="stat-card" style="background:#e6f7ed;"><i class="fa-solid fa-user-check" style="color:#1c9a53;"></i><div class="num" style="color:#1c9a53;" id="stat-health_workers">0</div><div class="label">Health Workers</div></div>
+      <div class="stat-card" style="background:#ecebfc;"><i class="fa-solid fa-user-doctor" style="color:#4c3fc9;"></i><div class="num" style="color:#4c3fc9;" id="stat-providers">0</div><div class="label">Providers</div></div>
+      <div class="stat-card" style="background:#fdf6e3;"><i class="fa-regular fa-calendar" style="color:#c9962c;"></i><div class="num" style="color:#c9962c;" id="stat-appointments">0</div><div class="label">Appointments</div></div>
+      <div class="stat-card" style="background:#fdefe0;"><i class="fa-regular fa-clock" style="color:#e07a1f;"></i><div class="num" style="color:#e07a1f;" id="stat-pending_appts">0</div><div class="label">Pending Appts</div></div>
+      <div class="stat-card" style="background:#f4ecfb;"><i class="fa-regular fa-envelope" style="color:#8b3fc9;"></i><div class="num" style="color:#8b3fc9;" id="stat-messages">0</div><div class="label">Messages</div></div>
+      <div class="stat-card" style="background:#f0f1f5;"><i class="fa-solid fa-shield" style="color:#555a6b;"></i><div class="num" style="color:#555a6b;" id="stat-complaints">0</div><div class="label">Complaints</div></div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="panel-title" style="color:var(--admin-2);">Portal Controls</div>
+        <div class="panel-box">
+          <div class="list-row">
+            <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-users"></i></div>
+            <div class="li-text"><div class="t">Manage Users</div><div class="d">View, change roles &amp; manage all users</div></div>
+          </div>
+          <div class="list-row">
+            <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-regular fa-calendar"></i></div>
+            <div class="li-text"><div class="t">Appointments</div><div class="d">Review, approve and assign bookings</div></div>
+          </div>
+          <div class="list-row">
+            <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-user-nurse"></i></div>
+            <div class="li-text"><div class="t">Allocations</div><div class="d">Assign doctors &amp; health workers to mothers</div></div>
+          </div>
+          <div class="list-row">
+            <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-user-doctor"></i></div>
+            <div class="li-text"><div class="t">Verify Providers</div><div class="d">Approve hospitals, doctors &amp; health workers</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-title" style="color:var(--admin-2);">Recent Registrations</div>
+        <div class="panel-box" id="admin-registrations">
+          <div class="empty-state">
+            <i class="fa-regular fa-user"></i>
+            <span>No users registered yet.</span>
+          </div>
+          <a class="view-all">View All Users →</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================= DOCTOR APP ================= -->
+<div class="app" id="app-doctor">
+  <aside class="sidebar" style="background:linear-gradient(180deg,var(--doctor-1),var(--doctor-2));">
+    <div class="sidebar-brand">
+      <div class="icon"><i class="fa-solid fa-user-doctor"></i></div>
+      <div class="brand-text"><div class="name">Mama Uhai</div><div class="role">Doctor Portal · Dr. Ainebyona</div></div>
+    </div>
+    <div class="nav-item active"><i class="fa-solid fa-table-cells"></i>Dashboard</div>
+    <div class="nav-item"><i class="fa-solid fa-user-group"></i>My Patients</div>
+    <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
+    <div class="nav-item"><i class="fa-regular fa-comment-dots"></i>Messages</div>
+    <div class="sidebar-spacer"></div>
+    <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
+  </aside>
+  <main class="main">
+    <div class="hero" style="background:linear-gradient(120deg,var(--doctor-1),var(--doctor-2));">
+      <h1 id="doctor-name-hero">Welcome, Doctor 👋</h1>
+      <p id="doctor-hero-sub">You have 0 pending approvals and 0 unread messages.</p>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
+      <div class="stat-card" style="background:#e9f0fe;"><i class="fa-solid fa-user-group" style="color:#2e5df0;"></i><div class="num" style="color:#2e5df0;" id="stat-assigned_patients">0</div><div class="label">Assigned Patients</div></div>
+      <div class="stat-card" style="background:#fdf6e3;"><i class="fa-regular fa-clock" style="color:#c9962c;"></i><div class="num" style="color:#c9962c;" id="stat-pending_approvals">0</div><div class="label">Pending Approvals</div></div>
+      <div class="stat-card" style="background:#e6f7ed;"><i class="fa-regular fa-calendar" style="color:#1c9a53;"></i><div class="num" style="color:#1c9a53;" id="stat-upcoming">0</div><div class="label">Upcoming</div></div>
+      <div class="stat-card" style="background:#f0f1f5;"><i class="fa-solid fa-circle-check" style="color:#555a6b;"></i><div class="num" style="color:#555a6b;" id="stat-completed">0</div><div class="label">Completed</div></div>
+      <div class="stat-card" style="background:#fdeaea;"><i class="fa-regular fa-comment" style="color:#c0272d;"></i><div class="num" style="color:#c0272d;" id="stat-unread_messages">0</div><div class="label">Unread Msgs</div></div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="panel-title" style="color:var(--doctor-2);">Upcoming Appointments</div>
+        <div class="panel-box" id="doctor-upcoming">
+          <div class="empty-state"><i class="fa-regular fa-calendar"></i><span>No upcoming appointments.</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-title" style="color:var(--doctor-2);">Pending Approvals</div>
+        <div class="panel-box" id="doctor-pending">
+          <div class="empty-state"><i class="fa-regular fa-circle-check"></i><span>No pending approvals.</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================= MOTHER APP ================= -->
+<div class="app" id="app-mother">
+  <aside class="sidebar" style="background:linear-gradient(180deg,var(--mother-teal-1),var(--mother-teal-2));">
+    <div class="sidebar-brand">
+      <div class="icon" style="background:#c0272d;"><i class="fa-solid fa-heart-pulse"></i></div>
+      <div class="brand-text"><div class="name">Mama Uhai</div><div class="role">Mother Portal</div></div>
+    </div>
+    <div class="nav-item active"><i class="fa-solid fa-house"></i>Dashboard</div>
+    <div class="nav-item"><i class="fa-solid fa-wand-magic-sparkles"></i>Mama AI</div>
+    <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
+    <div class="nav-item"><i class="fa-solid fa-user-doctor"></i>Find Doctors</div>
+    <div class="nav-item"><i class="fa-solid fa-hospital"></i>Hospitals</div>
+    <div class="nav-item"><i class="fa-solid fa-heart"></i>Services</div>
+    <div class="nav-item"><i class="fa-solid fa-wave-square"></i>Health Insights</div>
+    <div class="nav-item"><i class="fa-regular fa-id-card"></i>Digital Passport</div>
+    <div class="nav-item"><i class="fa-solid fa-book-open"></i>Education Center</div>
+    <div class="nav-item"><i class="fa-solid fa-car"></i>Transport</div>
+    <div class="nav-item"><i class="fa-solid fa-text-height"></i>Large Text</div>
+    <div class="sidebar-spacer"></div>
+    <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <i class="fa-solid fa-universal-access"></i>
+      <i class="fa-regular fa-moon"></i>
+      <span style="position:relative;">
+        <i class="fa-regular fa-bell" id="mother-bell" onclick="toggleNotifPanel()" style="cursor:pointer;"></i>
+        <span id="notif-badge" style="display:none;position:absolute;top:-6px;right:-8px;background:#c0272d;color:#fff;font-size:.6rem;font-weight:700;border-radius:50%;width:16px;height:16px;align-items:center;justify-content:center;">0</span>
+      </span>
+      <div id="notif-panel" style="display:none;position:absolute;top:60px;right:32px;width:280px;background:#fff;border:1px solid var(--card-border);border-radius:12px;box-shadow:0 20px 40px -20px rgba(0,0,0,.3);z-index:40;max-height:320px;overflow-y:auto;"></div>
+      <div class="avatar" id="mother-avatar">M</div>
+      <span class="who" id="mother-name-top">marthamulwanyi</span>
+    </div>
+
+    <div class="hero" style="background:linear-gradient(120deg,var(--mother-red-1),var(--mother-red-2));">
+      <p style="opacity:.9;font-size:.85rem;">Good afternoon,</p>
+      <h1 id="mother-name-hero">marthamulwanyi 🌸</h1>
+      <p id="mother-hero-sub">No upcoming appointments. Book one today!</p>
+      <div class="hero-actions">
+        <div class="hero-btn" onclick="openBooking()"><i class="fa-regular fa-calendar"></i>Book Appointment</div>
+        <div class="hero-btn"><i class="fa-solid fa-user-doctor"></i>Find a Doctor</div>
+      </div>
+    </div>
+
+    <div class="qa-grid">
+      <div class="qa-card" onclick="openBooking()" style="cursor:pointer;"><div class="qi" style="background:#2e5df0;"><i class="fa-regular fa-calendar"></i></div><div class="qt">Book Appt</div></div>
+      <div class="qa-card"><div class="qi" style="background:#c0272d;"><i class="fa-solid fa-user-doctor"></i></div><div class="qt">Find Doctor</div></div>
+      <div class="qa-card"><div class="qi" style="background:#e07a1f;"><i class="fa-solid fa-car"></i></div><div class="qt">Book Ride</div></div>
+      <div class="qa-card"><div class="qi" style="background:#1c9a53;"><i class="fa-regular fa-comment-dots"></i></div><div class="qt">Messages</div></div>
+      <div class="qa-card"><div class="qi" style="background:#8b3fc9;"><i class="fa-solid fa-hospital"></i></div><div class="qt">Hospitals</div></div>
+      <div class="qa-card"><div class="qi" style="background:#d63a7e;"><i class="fa-solid fa-receipt"></i></div><div class="qt">Costs</div></div>
+      <div class="qa-card"><div class="qi" style="background:#c0272d;"><i class="fa-solid fa-heart"></i></div><div class="qt">Services</div></div>
+      <div class="qa-card"><div class="qi" style="background:#555a6b;"><i class="fa-solid fa-file-lines"></i></div><div class="qt">Report</div></div>
+    </div>
+
+    <div class="section-head">
+      <div class="panel-title" style="color:var(--mother-teal-1);margin-bottom:0;">Upcoming Appointments</div>
+      <a class="add-link" onclick="openBooking()" style="cursor:pointer;">+ Book New</a>
+    </div>
+    <div class="panel-box" id="mother-appointments" style="margin-bottom:8px;">
+      <div class="empty-state"><i class="fa-regular fa-calendar"></i><span>No upcoming appointments.</span></div>
+    </div>
+
+    <!-- Simple booking modal -->
+    <div id="booking-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:24px;width:340px;max-width:90vw;">
+        <h3 style="font-size:1.05rem;margin-bottom:14px;color:var(--mother-teal-1);">Book an Appointment</h3>
+        <div class="field"><label>Reason for visit</label><div class="input-wrap" style="position:static;"><input id="booking-reason" style="padding-left:12px;" placeholder="e.g. Routine checkup"></div></div>
+        <div class="field"><label>Preferred date &amp; time</label><div class="input-wrap" style="position:static;"><input id="booking-date" type="datetime-local" style="padding-left:12px;"></div></div>
+        <div style="display:flex;gap:10px;margin-top:6px;">
+          <button onclick="closeBooking()" style="flex:1;padding:10px;border-radius:9px;background:#eee;color:#333;font-weight:600;">Cancel</button>
+          <button onclick="submitBooking()" style="flex:1;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <i class="fa-solid fa-lightbulb"></i>
+      <div><div class="tt">Daily Tip</div><div class="td">Stay hydrated and take short walks — gentle movement supports a healthy pregnancy.</div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const API = ''; // same-origin: server serves this file too
+  let token = localStorage.getItem('mu_token') || null;
+  let currentUser = JSON.parse(localStorage.getItem('mu_user') || 'null');
+  let socket = null;
+
+  const roleGrid = document.getElementById('role-grid');
+  let selectedRole = 'mother';
+
+  roleGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.role-btn');
+    if(!btn) return;
+    roleGrid.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedRole = btn.dataset.role;
+  });
+
+  document.getElementById('eye-toggle').addEventListener('click', () => {
+    const input = document.getElementById('login-password');
+    const icon = document.getElementById('eye-toggle');
+    if(input.type === 'password'){ input.type = 'text'; icon.classList.replace('fa-eye','fa-eye-slash'); }
+    else { input.type = 'password'; icon.classList.replace('fa-eye-slash','fa-eye'); }
+  });
+
+  function showLoginError(msg){
+    const el = document.getElementById('login-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+  function hideLoginError(){
+    document.getElementById('login-error').style.display = 'none';
+  }
+
+  async function api(path, options = {}){
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(API + path, Object.assign({}, options, { headers }));
+    let data = null;
+    try { data = await res.json(); } catch(e){}
+    if (!res.ok) throw new Error((data && data.error) || 'Request failed.');
+    return data;
+  }
+
+  document.getElementById('signin-btn').addEventListener('click', async () => {
+    hideLoginError();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) return showLoginError('Please enter your email and password.');
+
+    try {
+      const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('mu_token', token);
+      localStorage.setItem('mu_user', JSON.stringify(currentUser));
+      enterApp();
+    } catch (err) {
+      showLoginError(err.message);
+    }
+  });
+
+  function connectSocket(){
+    if (socket) socket.disconnect();
+    socket = io({ auth: { token } });
+    socket.on('notification', (n) => {
+      loadNotifications();
+    });
+    socket.on('appointment:new', () => refreshDashboard());
+    socket.on('appointment:update', () => refreshDashboard());
+    socket.on('message:new', () => refreshDashboard());
+  }
+
+  function enterApp(){
+    document.getElementById('login-screen').style.display = 'none';
+    connectSocket();
+
+    if (currentUser.role === 'admin'){
+      document.getElementById('app-admin').classList.add('active');
+    } else if (currentUser.role === 'doctor' || currentUser.role === 'health_worker'){
+      document.getElementById('app-doctor').classList.add('active');
+      document.getElementById('doctor-name-hero').textContent = 'Welcome, ' + currentUser.name + ' 👋';
+    } else {
+      document.getElementById('app-mother').classList.add('active');
+      document.getElementById('mother-name-hero').textContent = currentUser.name + ' 🌸';
+      document.getElementById('mother-name-top').textContent = currentUser.name;
+      document.getElementById('mother-avatar').textContent = currentUser.name.charAt(0).toUpperCase();
+    }
+    refreshDashboard();
+  }
+
+  async function refreshDashboard(){
+    if (!currentUser) return;
+    try {
+      if (currentUser.role === 'admin'){
+        const stats = await api('/api/stats/admin');
+        Object.entries(stats).forEach(([k,v]) => { const el = document.getElementById('stat-' + k); if (el) el.textContent = v; });
+        const users = await api('/api/users?role=mother');
+        renderRegistrations(users);
+      } else if (currentUser.role === 'doctor' || currentUser.role === 'health_worker'){
+        const stats = await api('/api/stats/doctor');
+        Object.entries(stats).forEach(([k,v]) => { const el = document.getElementById('stat-' + k); if (el) el.textContent = v; });
+        document.getElementById('doctor-hero-sub').textContent =
+          `You have ${stats.pending_approvals} pending approvals and ${stats.unread_messages} unread messages.`;
+        const appts = await api('/api/appointments');
+        renderDoctorAppointments(appts);
+      } else {
+        const stats = await api('/api/stats/mother');
+        document.getElementById('mother-hero-sub').textContent =
+          stats.upcoming > 0 ? `You have ${stats.upcoming} upcoming appointment(s).` : 'No upcoming appointments. Book one today!';
+        const appts = await api('/api/appointments');
+        renderMotherAppointments(appts);
+      }
+      loadNotifications();
+    } catch (err) {
+      if (err.message.includes('token')) signOut();
+    }
+  }
+
+  function renderRegistrations(users){
+    const box = document.getElementById('admin-registrations');
+    if (!users.length){
+      box.innerHTML = `<div class="empty-state"><i class="fa-regular fa-user"></i><span>No users registered yet.</span></div><a class="view-all">View All Users →</a>`;
+      return;
+    }
+    box.innerHTML = users.slice(0,5).map(u => `
+      <div class="list-row">
+        <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-user"></i></div>
+        <div class="li-text"><div class="t">${escapeHtml(u.name)}</div><div class="d">${escapeHtml(u.email)} · ${u.role}</div></div>
+      </div>`).join('') + `<a class="view-all">View All Users →</a>`;
+  }
+
+  function renderDoctorAppointments(appts){
+    const upcoming = appts.filter(a => ['approved','assigned'].includes(a.status));
+    const pending = appts.filter(a => a.status === 'assigned');
+    const upBox = document.getElementById('doctor-upcoming');
+    const pendBox = document.getElementById('doctor-pending');
+    upBox.innerHTML = upcoming.length ? upcoming.map(apptRow).join('') :
+      `<div class="empty-state"><i class="fa-regular fa-calendar"></i><span>No upcoming appointments.</span></div>`;
+    pendBox.innerHTML = pending.length ? pending.map(a => apptRow(a, true)).join('') :
+      `<div class="empty-state"><i class="fa-regular fa-circle-check"></i><span>No pending approvals.</span></div>`;
+  }
+
+  function apptRow(a, withActions){
+    const who = a.mother_name || a.provider_name || 'Patient';
+    const actions = withActions ? `<button onclick="updateStatus(${a.id},'completed')" style="margin-left:auto;background:#1c9a53;color:#fff;padding:6px 10px;border-radius:7px;font-size:.72rem;font-weight:600;">Complete</button>` : '';
+    return `<div class="list-row">
+      <div class="li-icon" style="background:#e9f0fe;color:#2e5df0;"><i class="fa-regular fa-calendar"></i></div>
+      <div class="li-text"><div class="t">${escapeHtml(who)}</div><div class="d">${escapeHtml(a.reason || 'No reason given')} · ${a.status}</div></div>
+      ${actions}
+    </div>`;
+  }
+
+  function renderMotherAppointments(appts){
+    const box = document.getElementById('mother-appointments');
+    if (!appts.length){
+      box.innerHTML = `<div class="empty-state"><i class="fa-regular fa-calendar"></i><span>No upcoming appointments.</span></div>`;
+      return;
+    }
+    box.innerHTML = appts.map(a => `
+      <div class="list-row">
+        <div class="li-icon" style="background:#fdeaea;color:#c0272d;"><i class="fa-regular fa-calendar"></i></div>
+        <div class="li-text"><div class="t">${escapeHtml(a.reason || 'Appointment')}</div><div class="d">${a.scheduled_for || 'Date TBC'} · ${a.status}${a.provider_name ? ' · ' + escapeHtml(a.provider_name) : ''}</div></div>
+      </div>`).join('');
+  }
+
+  async function updateStatus(id, status){
+    try { await api(`/api/appointments/${id}/status`, { method:'PATCH', body: JSON.stringify({ status }) }); refreshDashboard(); }
+    catch(err){ alert(err.message); }
+  }
+
+  function openBooking(){ document.getElementById('booking-modal').style.display = 'flex'; }
+  function closeBooking(){ document.getElementById('booking-modal').style.display = 'none'; }
+  async function submitBooking(){
+    const reason = document.getElementById('booking-reason').value.trim();
+    const scheduled_for = document.getElementById('booking-date').value;
+    try {
+      await api('/api/appointments', { method:'POST', body: JSON.stringify({ reason, scheduled_for }) });
+      closeBooking();
+      document.getElementById('booking-reason').value = '';
+      document.getElementById('booking-date').value = '';
+      refreshDashboard();
+    } catch(err){ alert(err.message); }
+  }
+
+  async function loadNotifications(){
+    try {
+      const notifs = await api('/api/notifications');
+      const unread = notifs.filter(n => !n.read_at).length;
+      const badge = document.getElementById('notif-badge');
+      if (badge){
+        badge.style.display = unread ? 'flex' : 'none';
+        badge.textContent = unread;
+      }
+      const panel = document.getElementById('notif-panel');
+      if (panel){
+        panel.innerHTML = notifs.length
+          ? notifs.slice(0,10).map(n => `<div style="padding:10px 14px;border-bottom:1px solid #f0f0f5;font-size:.78rem;">${escapeHtml(n.body)}<div style="color:#999;font-size:.68rem;margin-top:2px;">${n.created_at}</div></div>`).join('')
+          : `<div style="padding:16px;text-align:center;color:#999;font-size:.8rem;">No notifications yet.</div>`;
+      }
+    } catch(err) {}
+  }
+
+  function toggleNotifPanel(){
+    const panel = document.getElementById('notif-panel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  function signOut(){
+    token = null; currentUser = null;
+    localStorage.removeItem('mu_token'); localStorage.removeItem('mu_user');
+    if (socket) socket.disconnect();
+    document.querySelectorAll('.app').forEach(a => a.classList.remove('active'));
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+  }
+
+  // sidebar nav visual toggle within each app (no routing, just UI feedback)
+  document.querySelectorAll('.sidebar').forEach(sb => {
+    sb.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        sb.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+  });
+
+  // Auto-login if a token is already stored (page refresh)
+  if (token && currentUser) {
+    enterApp();
+  }
+</script>
+</body>
+</html>
