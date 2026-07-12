@@ -106,6 +106,47 @@ This covers the core of your spec (real-time sync for appointments/notifications
 
 Happy to build out any of these next — the messaging UI and admin user-management table are probably the highest-value next additions.
 
+## Docker (fallback if a local Postgres install is giving you trouble)
+
+If installing/running Postgres directly on your machine is unreliable, Docker sidesteps that entirely — it runs a clean Postgres instance in a container instead. This project includes a `docker-compose.yml` covering two ways to use it.
+
+**Prerequisite:** install Docker Desktop (Mac/Windows) or Docker Engine (Linux) from https://www.docker.com/products/docker-desktop/ if you don't have it.
+
+### Option A: Just run Postgres in Docker, keep running the app with `npm start`
+
+This is the minimal fix if only your Postgres install is the problem:
+
+```
+docker compose up -d db
+```
+
+This starts a Postgres 16 container on `localhost:5432` with a persistent volume (data survives container restarts). Then set your `.env` to:
+```
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/mama_uhai
+```
+and run the app as normal:
+```
+npm start
+```
+
+To stop it: `docker compose stop db`. To wipe its data and start fresh: `docker compose down -v`.
+
+### Option B: Run the whole app (Node + Postgres) in Docker together
+
+```
+docker compose up --build
+```
+
+This builds the app image from the included `Dockerfile` and starts both the app and database as containers that talk to each other automatically — no local Node.js or Postgres installation needed at all. Visit **http://localhost:4000** once it's up.
+
+To stop: `Ctrl+C`, then `docker compose down` (add `-v` to also delete the database volume).
+
+### Note on Render
+
+Render's native Node.js runtime (what we've been using — "Build Command: npm install", "Start Command: npm start") does **not** use this Dockerfile; that's a separate path and doesn't require Docker knowledge to deploy successfully. The Dockerfile here is for your **local machine** as a fallback, or for advanced use if you ever want to switch your Render web service to "Docker" as its runtime instead of "Node" — under your service's Settings, you can change the runtime and Render will build from this `Dockerfile` instead. This isn't necessary for the app to work; it's an alternative path if the native Node build ever gives you trouble.
+
+**A note on testing:** this Dockerfile and Compose setup follow standard, well-established patterns for Node + Postgres, but I wasn't able to run an actual Docker build in the environment I built this in (no Docker daemon available there). If anything doesn't behave as described, let me know the exact error and I'll fix it.
+
 ## Troubleshooting
 
 ### "Failed to initialize database: ECONNREFUSED 127.0.0.1:5432" on Render
