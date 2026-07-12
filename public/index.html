@@ -201,6 +201,46 @@
   }
   .menu-toggle{display:none;}
   @media(max-width:720px){.menu-toggle{display:flex;}}
+
+  /* ---------------- MAMA AI ---------------- */
+  .ai-header{
+    background:linear-gradient(120deg,#7b3fc9,#c0272d); padding:20px 24px; color:#fff; position:relative; overflow:hidden;
+  }
+  .ai-header::after{ content:""; position:absolute; right:-30px; top:-30px; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,.1); }
+  .ai-header h3{font-size:1.15rem; font-weight:700; display:flex; align-items:center; gap:8px; position:relative; z-index:1;}
+  .ai-header p{font-size:.76rem; opacity:.9; margin-top:4px; position:relative; z-index:1; max-width:80%;}
+  .ai-bubble{max-width:78%; padding:11px 15px; border-radius:14px; font-size:.87rem; line-height:1.45;}
+  .ai-bubble.bot{background:#f4effb; color:#2d2140; border-bottom-left-radius:4px; align-self:flex-start;}
+  .ai-bubble.user{background:linear-gradient(120deg,#7b3fc9,#c0272d); color:#fff; border-bottom-right-radius:4px; align-self:flex-end;}
+  .ai-chip{
+    padding:7px 13px; border-radius:20px; border:1px solid #e2d9f5; background:#fff; color:#6b3fa0; font-size:.74rem;
+    font-weight:600; cursor:pointer; white-space:nowrap; transition:.15s;
+  }
+  .ai-chip:hover{background:#f4effb;}
+  .ai-typing span{
+    display:inline-block; width:6px; height:6px; border-radius:50%; background:#a98fd6; margin-right:3px;
+    animation:aiTypingBounce 1.2s infinite;
+  }
+  .ai-typing span:nth-child(2){animation-delay:.15s;}
+  .ai-typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes aiTypingBounce{0%,60%,100%{transform:translateY(0); opacity:.5;} 30%{transform:translateY(-4px); opacity:1;}}
+
+  /* ---------------- COMING SOON ---------------- */
+  .soon-icon{
+    width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+    background:#f4effb; color:#7b3fc9; font-size:1.4rem; margin:0 auto 14px;
+  }
+
+  /* ---------------- LARGE TEXT ACCESSIBILITY MODE ---------------- */
+  body.large-text-mode{font-size:1.18em;}
+  body.large-text-mode .hero h1{font-size:1.95rem;}
+  body.large-text-mode .hero p{font-size:1.05rem;}
+  body.large-text-mode .stat-card .num{font-size:2rem;}
+  body.large-text-mode .stat-card .label{font-size:.92rem;}
+  body.large-text-mode .nav-item{font-size:1rem; padding:13px 12px;}
+  body.large-text-mode .qa-card .qt{font-size:.95rem;}
+  body.large-text-mode .list-row .t{font-size:1rem;}
+  body.large-text-mode .list-row .d{font-size:.88rem;}
 </style>
 </head>
 <body>
@@ -263,12 +303,12 @@
       <div class="brand-text"><div class="name">Mama Uhai</div><div class="role">Admin Control Center</div></div>
     </div>
     <div class="nav-item active"><i class="fa-solid fa-table-cells"></i>Dashboard</div>
-    <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
-    <div class="nav-item"><i class="fa-solid fa-user-nurse"></i>Allocations</div>
-    <div class="nav-item"><i class="fa-solid fa-user-doctor"></i>Providers</div>
+    <div class="nav-item" onclick="openAdminAppointments()"><i class="fa-regular fa-calendar"></i>Appointments</div>
+    <div class="nav-item" onclick="openAdminAppointments()"><i class="fa-solid fa-user-nurse"></i>Allocations</div>
+    <div class="nav-item" onclick="openUserMgmt()"><i class="fa-solid fa-user-doctor"></i>Providers</div>
     <div class="nav-item" onclick="openUserMgmt()"><i class="fa-solid fa-user-gear"></i>User Mgmt</div>
     <div class="nav-item" onclick="openMessages()"><i class="fa-regular fa-envelope"></i>Messages</div>
-    <div class="nav-item"><i class="fa-regular fa-circle-question"></i>Complaints</div>
+    <div class="nav-item" onclick="openComplaints()"><i class="fa-regular fa-circle-question"></i>Complaints</div>
     <div class="sidebar-spacer"></div>
     <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
   </aside>
@@ -297,15 +337,15 @@
             <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-users"></i></div>
             <div class="li-text"><div class="t">Manage Users</div><div class="d">View, change roles &amp; manage all users</div></div>
           </div>
-          <div class="list-row">
+          <div class="list-row" onclick="openAdminAppointments()" style="cursor:pointer;">
             <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-regular fa-calendar"></i></div>
             <div class="li-text"><div class="t">Appointments</div><div class="d">Review, approve and assign bookings</div></div>
           </div>
-          <div class="list-row">
+          <div class="list-row" onclick="openAdminAppointments()" style="cursor:pointer;">
             <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-user-nurse"></i></div>
             <div class="li-text"><div class="t">Allocations</div><div class="d">Assign doctors &amp; health workers to mothers</div></div>
           </div>
-          <div class="list-row">
+          <div class="list-row" onclick="openUserMgmt()" style="cursor:pointer;">
             <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-user-doctor"></i></div>
             <div class="li-text"><div class="t">Verify Providers</div><div class="d">Approve hospitals, doctors &amp; health workers</div></div>
           </div>
@@ -333,7 +373,7 @@
       <div class="brand-text"><div class="name">Mama Uhai</div><div class="role">Doctor Portal · Dr. Ainebyona</div></div>
     </div>
     <div class="nav-item active"><i class="fa-solid fa-table-cells"></i>Dashboard</div>
-    <div class="nav-item"><i class="fa-solid fa-user-group"></i>My Patients</div>
+    <div class="nav-item" onclick="openMyPatients()"><i class="fa-solid fa-user-group"></i>My Patients</div>
     <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
     <div class="nav-item" onclick="openMessages()"><i class="fa-regular fa-comment-dots"></i>Messages</div>
     <div class="sidebar-spacer"></div>
@@ -378,16 +418,16 @@
       <div class="brand-text"><div class="name">Mama Uhai</div><div class="role">Mother Portal</div></div>
     </div>
     <div class="nav-item active"><i class="fa-solid fa-house"></i>Dashboard</div>
-    <div class="nav-item"><i class="fa-solid fa-wand-magic-sparkles"></i>Mama AI</div>
+    <div class="nav-item" onclick="openMamaAI()"><i class="fa-solid fa-wand-magic-sparkles"></i>Mama AI</div>
     <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
     <div class="nav-item" onclick="openProviders()"><i class="fa-solid fa-user-doctor"></i>Find Doctors</div>
-    <div class="nav-item"><i class="fa-solid fa-hospital"></i>Hospitals</div>
-    <div class="nav-item"><i class="fa-solid fa-heart"></i>Services</div>
-    <div class="nav-item"><i class="fa-solid fa-wave-square"></i>Health Insights</div>
-    <div class="nav-item"><i class="fa-regular fa-id-card"></i>Digital Passport</div>
-    <div class="nav-item"><i class="fa-solid fa-book-open"></i>Education Center</div>
-    <div class="nav-item"><i class="fa-solid fa-car"></i>Transport</div>
-    <div class="nav-item"><i class="fa-solid fa-text-height"></i>Large Text</div>
+    <div class="nav-item" onclick="openHospitals()"><i class="fa-solid fa-hospital"></i>Hospitals</div>
+    <div class="nav-item" onclick="openServices()"><i class="fa-solid fa-heart"></i>Services</div>
+    <div class="nav-item" onclick="openInsights()"><i class="fa-solid fa-wave-square"></i>Health Insights</div>
+    <div class="nav-item" onclick="openPassport()"><i class="fa-regular fa-id-card"></i>Digital Passport</div>
+    <div class="nav-item" onclick="openEducation()"><i class="fa-solid fa-book-open"></i>Education Center</div>
+    <div class="nav-item" onclick="openRides()"><i class="fa-solid fa-car"></i>Transport</div>
+    <div class="nav-item" onclick="toggleLargeText()"><i class="fa-solid fa-text-height"></i>Large Text</div>
     <div class="sidebar-spacer"></div>
     <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
   </aside>
@@ -417,12 +457,12 @@
     <div class="qa-grid">
       <div class="qa-card" onclick="openBooking()" style="cursor:pointer;"><div class="qi" style="background:#2e5df0;"><i class="fa-regular fa-calendar"></i></div><div class="qt">Book Appt</div></div>
       <div class="qa-card" onclick="openProviders()" style="cursor:pointer;"><div class="qi" style="background:#c0272d;"><i class="fa-solid fa-user-doctor"></i></div><div class="qt">Find Doctor</div></div>
-      <div class="qa-card"><div class="qi" style="background:#e07a1f;"><i class="fa-solid fa-car"></i></div><div class="qt">Book Ride</div></div>
+      <div class="qa-card" onclick="openRides()" style="cursor:pointer;"><div class="qi" style="background:#e07a1f;"><i class="fa-solid fa-car"></i></div><div class="qt">Book Ride</div></div>
       <div class="qa-card" onclick="openMessages()" style="cursor:pointer;"><div class="qi" style="background:#1c9a53;"><i class="fa-regular fa-comment-dots"></i></div><div class="qt">Messages</div></div>
-      <div class="qa-card"><div class="qi" style="background:#8b3fc9;"><i class="fa-solid fa-hospital"></i></div><div class="qt">Hospitals</div></div>
-      <div class="qa-card"><div class="qi" style="background:#d63a7e;"><i class="fa-solid fa-receipt"></i></div><div class="qt">Costs</div></div>
-      <div class="qa-card"><div class="qi" style="background:#c0272d;"><i class="fa-solid fa-heart"></i></div><div class="qt">Services</div></div>
-      <div class="qa-card"><div class="qi" style="background:#555a6b;"><i class="fa-solid fa-file-lines"></i></div><div class="qt">Report</div></div>
+      <div class="qa-card" onclick="openHospitals()" style="cursor:pointer;"><div class="qi" style="background:#8b3fc9;"><i class="fa-solid fa-hospital"></i></div><div class="qt">Hospitals</div></div>
+      <div class="qa-card" onclick="openCosts()" style="cursor:pointer;"><div class="qi" style="background:#d63a7e;"><i class="fa-solid fa-receipt"></i></div><div class="qt">Costs</div></div>
+      <div class="qa-card" onclick="openServices()" style="cursor:pointer;"><div class="qi" style="background:#c0272d;"><i class="fa-solid fa-heart"></i></div><div class="qt">Services</div></div>
+      <div class="qa-card" onclick="openReportModal()" style="cursor:pointer;"><div class="qi" style="background:#555a6b;"><i class="fa-solid fa-file-lines"></i></div><div class="qt">Report</div></div>
     </div>
 
     <div class="section-head">
@@ -530,6 +570,153 @@
         </thead>
         <tbody id="usermgmt-tbody"></tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MAMA AI MODAL ================= -->
+<div id="mamaai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:440px;max-width:94vw;height:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="ai-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Mama AI</h3>
+        <i class="fa-solid fa-xmark" onclick="closeMamaAI()" style="cursor:pointer;opacity:.85;"></i>
+      </div>
+      <p>Your maternal health companion — for general guidance only. Always contact your doctor or health worker for anything urgent or specific to you.</p>
+    </div>
+    <div id="ai-messages" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background:#fafafd;"></div>
+    <div id="ai-chips" style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;"></div>
+    <div style="padding:12px 16px 16px;display:flex;gap:8px;border-top:1px solid #eee;">
+      <input id="ai-input" placeholder="Ask about nutrition, symptoms, exercise..." style="flex:1;padding:11px 14px;border-radius:10px;border:1px solid #ddd;font-size:.85rem;" onkeydown="if(event.key==='Enter') sendMamaAI();">
+      <button onclick="sendMamaAI()" style="padding:11px 16px;border-radius:10px;background:linear-gradient(120deg,#7b3fc9,#c0272d);color:#fff;font-weight:600;"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= COMING SOON MODAL ================= -->
+<div id="soon-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px;width:320px;max-width:90vw;text-align:center;">
+    <div class="soon-icon"><i class="fa-solid fa-hourglass-half" id="soon-icon-i"></i></div>
+    <h3 id="soon-title" style="font-size:1.05rem;margin-bottom:8px;">Coming Soon</h3>
+    <p id="soon-desc" style="font-size:.82rem;color:var(--text-mid);margin-bottom:18px;">This feature is on its way.</p>
+    <button onclick="closeComingSoon()" style="width:100%;padding:10px;border-radius:9px;background:#f0f1f5;color:#333;font-weight:600;">Got it</button>
+  </div>
+</div>
+
+<!-- ================= GENERIC INFO MODAL (Hospitals / Services / Education / Costs) ================= -->
+<div id="info-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:480px;max-width:94vw;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:18px 22px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="info-modal-title" style="font-size:1.05rem;color:var(--mother-teal-1);"></h3>
+      <i class="fa-solid fa-xmark" onclick="closeInfoModal()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div id="info-modal-body" style="padding:18px 22px;overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
+
+<!-- ================= HEALTH INSIGHTS MODAL ================= -->
+<div id="insights-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:420px;max-width:94vw;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:18px 22px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="font-size:1.05rem;color:var(--mother-teal-1);"><i class="fa-solid fa-wave-square"></i> Health Insights</h3>
+      <i class="fa-solid fa-xmark" onclick="closeInsights()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div style="padding:20px 22px;overflow-y:auto;flex:1;">
+      <div class="field">
+        <label>Your due date</label>
+        <div class="input-wrap" style="position:static;">
+          <input id="insights-due-date" type="date" style="padding-left:12px;">
+        </div>
+      </div>
+      <button onclick="saveDueDate()" style="width:100%;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;margin-bottom:18px;">Save Due Date</button>
+      <div id="insights-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DIGITAL PASSPORT MODAL ================= -->
+<div id="passport-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:440px;max-width:94vw;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:18px 22px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="font-size:1.05rem;color:var(--mother-teal-1);"><i class="fa-regular fa-id-card"></i> Digital Passport</h3>
+      <i class="fa-solid fa-xmark" onclick="closePassport()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div id="passport-content" style="padding:20px 22px;overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
+
+<!-- ================= TRANSPORT / RIDES MODAL ================= -->
+<div id="rides-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:420px;max-width:94vw;max-height:84vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:18px 22px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="font-size:1.05rem;color:var(--mother-teal-1);"><i class="fa-solid fa-car"></i> Transport</h3>
+      <i class="fa-solid fa-xmark" onclick="closeRides()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div style="padding:18px 22px;overflow-y:auto;flex:1;">
+      <div class="field"><label>Pickup location</label><div class="input-wrap" style="position:static;"><input id="ride-pickup" style="padding-left:12px;" placeholder="e.g. Home, Kireka"></div></div>
+      <div class="field"><label>Destination</label><div class="input-wrap" style="position:static;"><input id="ride-destination" style="padding-left:12px;" placeholder="e.g. Mulago Hospital"></div></div>
+      <button onclick="submitRide()" style="width:100%;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;margin-bottom:18px;">Request Ride</button>
+      <div class="panel-title" style="font-size:.9rem;color:var(--mother-teal-1);">Your Ride Requests</div>
+      <div id="rides-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADMIN: APPOINTMENTS & ALLOCATIONS ================= -->
+<div id="adminappts-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:800px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:1.05rem;color:var(--admin-2);">Appointments &amp; Allocations</h3>
+      <i class="fa-solid fa-xmark" onclick="closeAdminAppointments()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div style="overflow-y:auto;flex:1;">
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+        <thead>
+          <tr style="text-align:left;color:#888;border-bottom:1px solid #eee;">
+            <th style="padding:8px;">Mother</th>
+            <th style="padding:8px;">Reason</th>
+            <th style="padding:8px;">Assign Provider</th>
+            <th style="padding:8px;">Status</th>
+            <th style="padding:8px;"></th>
+          </tr>
+        </thead>
+        <tbody id="adminappts-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADMIN: COMPLAINTS ================= -->
+<div id="complaints-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:640px;max-width:94vw;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:1.05rem;color:var(--admin-2);">Complaints</h3>
+      <i class="fa-solid fa-xmark" onclick="closeComplaints()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div id="complaints-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
+
+<!-- ================= DOCTOR: MY PATIENTS ================= -->
+<div id="mypatients-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:440px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:1.05rem;color:var(--doctor-2);">My Patients</h3>
+      <i class="fa-solid fa-xmark" onclick="closeMyPatients()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div id="mypatients-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
+
+<!-- ================= MOTHER: REPORT / FILE COMPLAINT ================= -->
+<div id="report-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:360px;max-width:92vw;">
+    <h3 style="font-size:1.05rem;margin-bottom:14px;color:var(--mother-teal-1);">Report an Issue</h3>
+    <div class="field"><label>Subject</label><div class="input-wrap" style="position:static;"><input id="report-subject" style="padding-left:12px;" placeholder="e.g. Long wait time"></div></div>
+    <div class="field"><label>Details</label><textarea id="report-body" rows="4" style="width:100%;padding:11px 12px;border-radius:9px;border:1px solid #dfe1ec;background:#eef1fb;font-size:.88rem;font-family:inherit;" placeholder="Tell us what happened..."></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button onclick="closeReportModal()" style="flex:1;padding:10px;border-radius:9px;background:#eee;color:#333;font-weight:600;">Cancel</button>
+      <button onclick="submitReport()" style="flex:1;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;">Submit</button>
     </div>
   </div>
 </div>
@@ -929,6 +1116,420 @@
       await api('/api/users/' + id, { method:'DELETE' });
       loadUserMgmt();
       refreshDashboard();
+    } catch(err){ alert(err.message); }
+  }
+
+  // ============== MAMA AI ==============
+  let aiHistory = [];
+  const AI_CHIPS = ['Nutrition tips', 'Common symptoms', 'Is this normal?', 'Exercise during pregnancy', 'Trouble sleeping'];
+
+  function openMamaAI(){
+    document.getElementById('mamaai-modal').style.display = 'flex';
+    const box = document.getElementById('ai-messages');
+    if (!box.dataset.greeted){
+      addAIBubble('bot', `Hello${currentUser ? ', ' + currentUser.name.split(' ')[0] : ''}! 🌸 I'm Mama AI — ask me about nutrition, common symptoms, staying active, or anything else on your mind today.`);
+      box.dataset.greeted = '1';
+    }
+    renderAIChips();
+  }
+  function closeMamaAI(){
+    document.getElementById('mamaai-modal').style.display = 'none';
+  }
+
+  function renderAIChips(){
+    const chipBox = document.getElementById('ai-chips');
+    chipBox.innerHTML = AI_CHIPS.map(c => `<div class="ai-chip" onclick="quickAskAI('${c.replace(/'/g, "\\'")}')">${escapeHtml(c)}</div>`).join('');
+  }
+
+  function quickAskAI(text){
+    document.getElementById('ai-input').value = text;
+    sendMamaAI();
+  }
+
+  function addAIBubble(who, text){
+    const box = document.getElementById('ai-messages');
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-bubble ' + (who === 'user' ? 'user' : 'bot');
+    bubble.textContent = text;
+    box.appendChild(bubble);
+    box.scrollTop = box.scrollHeight;
+    return bubble;
+  }
+
+  async function sendMamaAI(){
+    const input = document.getElementById('ai-input');
+    const message = input.value.trim();
+    if (!message) return;
+    input.value = '';
+    addAIBubble('user', message);
+
+    const box = document.getElementById('ai-messages');
+    const typing = document.createElement('div');
+    typing.className = 'ai-bubble bot ai-typing';
+    typing.innerHTML = '<span></span><span></span><span></span>';
+    box.appendChild(typing);
+    box.scrollTop = box.scrollHeight;
+
+    try {
+      const data = await api('/api/mama-ai', { method:'POST', body: JSON.stringify({ message, history: aiHistory }) });
+      typing.remove();
+      addAIBubble('bot', data.reply);
+      aiHistory.push({ role: 'user', content: message });
+      aiHistory.push({ role: 'assistant', content: data.reply });
+    } catch(err){
+      typing.remove();
+      addAIBubble('bot', "Sorry, I couldn't respond just now. Please try again in a moment, or reach out to your doctor or health worker directly if it's urgent.");
+    }
+  }
+
+  // ============== COMING SOON ==============
+  function showComingSoon(title, desc, icon){
+    document.getElementById('soon-title').textContent = title;
+    document.getElementById('soon-desc').textContent = desc || "This feature is on its way — we're working on it.";
+    document.getElementById('soon-icon-i').className = 'fa-solid ' + (icon || 'fa-hourglass-half');
+    document.getElementById('soon-modal').style.display = 'flex';
+  }
+  function closeComingSoon(){
+    document.getElementById('soon-modal').style.display = 'none';
+  }
+
+  // ============== STATIC CONTENT: HOSPITALS / SERVICES / EDUCATION / COSTS ==============
+  const HOSPITALS = [
+    { name: 'Mulago National Referral Hospital', location: 'Kampala', note: 'Full maternity ward, NICU, 24/7 emergency obstetric care.' },
+    { name: 'Kawempe National Referral Hospital', location: 'Kampala', note: 'Specialist maternal & newborn health referral center.' },
+    { name: 'Nsambya Hospital', location: 'Kampala', note: 'Private, well-equipped maternity unit with antenatal clinic.' },
+    { name: 'St. Francis Hospital Nsambya', location: 'Kampala', note: 'General + maternity services, community outreach programs.' },
+    { name: 'Mengo Hospital', location: 'Kampala', note: 'One of the oldest hospitals in Uganda, active maternity department.' },
+  ];
+  const SERVICES = [
+    { name: 'Antenatal Care', desc: 'Regular check-ups throughout pregnancy to monitor the health of mother and baby.' },
+    { name: 'Skilled Birth Attendance', desc: 'A trained doctor or midwife present during delivery.' },
+    { name: 'Postnatal Care', desc: 'Follow-up care for mother and newborn in the weeks after birth.' },
+    { name: 'Family Planning Counseling', desc: 'Guidance on birth spacing and contraceptive options.' },
+    { name: 'Immunization', desc: 'Routine vaccinations for newborns and infants.' },
+    { name: 'Nutrition Counseling', desc: 'Personalized guidance on eating well during pregnancy and breastfeeding.' },
+  ];
+  const EDUCATION_ARTICLES = [
+    { title: 'Eating Well During Pregnancy', body: 'Focus on iron-rich foods (beans, leafy greens, meat), calcium (milk, small fish), and folic acid. Drink plenty of clean water and eat small, frequent meals if nausea is an issue.' },
+    { title: 'Warning Signs You Should Never Ignore', body: 'Heavy bleeding, severe headache with blurred vision, severe abdominal pain, reduced baby movement, high fever, or difficulty breathing all need immediate medical attention — go to the nearest hospital right away.' },
+    { title: 'Preparing for Labor', body: 'Pack a bag with essentials 2-3 weeks before your due date: ID, antenatal card, clothes for you and baby, sanitary pads, and any medication you take. Know the route to your chosen hospital.' },
+    { title: 'The First Weeks with Your Newborn', body: 'Breastfeed on demand, keep the baby warm and skin-to-skin often, watch for jaundice (yellowing skin/eyes), and attend your postnatal and immunization appointments on schedule.' },
+    { title: 'Caring for Your Mental Health', body: 'Feeling overwhelmed, tearful, or anxious after birth is common and treatable. If these feelings are intense or last more than two weeks, talk to your health worker or doctor — you deserve support too.' },
+  ];
+  const COSTS = [
+    { item: 'Antenatal visit (public facility)', price: 'Free at government hospitals/health centers' },
+    { item: 'Antenatal visit (private facility)', price: 'Approx. UGX 20,000 – 50,000' },
+    { item: 'Normal delivery (public facility)', price: 'Free at government hospitals' },
+    { item: 'Normal delivery (private facility)', price: 'Approx. UGX 300,000 – 1,500,000' },
+    { item: 'Caesarean section (private facility)', price: 'Approx. UGX 1,500,000 – 4,000,000' },
+    { item: 'Ride to clinic (via Mama Uhai Transport)', price: 'Cost shown before you confirm your ride' },
+  ];
+
+  function openInfoModal(title, bodyHtml){
+    document.getElementById('info-modal-title').textContent = title;
+    document.getElementById('info-modal-body').innerHTML = bodyHtml;
+    document.getElementById('info-modal').style.display = 'flex';
+  }
+  function closeInfoModal(){
+    document.getElementById('info-modal').style.display = 'none';
+  }
+  function openHospitals(){
+    openInfoModal('Hospitals & Clinics', HOSPITALS.map(h => `
+      <div class="list-row" style="padding:12px 4px;">
+        <div class="li-icon" style="background:#f4ecfb;color:#8b3fc9;"><i class="fa-solid fa-hospital"></i></div>
+        <div class="li-text"><div class="t">${escapeHtml(h.name)}</div><div class="d">${escapeHtml(h.location)} · ${escapeHtml(h.note)}</div></div>
+      </div>`).join(''));
+  }
+  function openServices(){
+    openInfoModal('Our Services', SERVICES.map(s => `
+      <div class="list-row" style="padding:12px 4px;">
+        <div class="li-icon" style="background:#fdeaea;color:#c0272d;"><i class="fa-solid fa-heart"></i></div>
+        <div class="li-text"><div class="t">${escapeHtml(s.name)}</div><div class="d">${escapeHtml(s.desc)}</div></div>
+      </div>`).join(''));
+  }
+  function openEducation(){
+    openInfoModal('Education Center', EDUCATION_ARTICLES.map(a => `
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:700;font-size:.88rem;margin-bottom:4px;color:var(--mother-teal-1);">${escapeHtml(a.title)}</div>
+        <div style="font-size:.8rem;color:var(--text-mid);line-height:1.5;">${escapeHtml(a.body)}</div>
+      </div>`).join(''));
+  }
+  function openCosts(){
+    openInfoModal('Cost Estimates', `<table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+      ${COSTS.map(c => `<tr style="border-bottom:1px solid #f0f0f5;"><td style="padding:10px 4px;">${escapeHtml(c.item)}</td><td style="padding:10px 4px;text-align:right;color:var(--text-mid);white-space:nowrap;">${escapeHtml(c.price)}</td></tr>`).join('')}
+    </table><p style="font-size:.72rem;color:#999;margin-top:12px;">Estimates only — actual costs vary by facility. Ask your provider for an exact quote.</p>`);
+  }
+
+  // ============== HEALTH INSIGHTS ==============
+  const WEEKLY_FACTS = {
+    4: 'Your baby is now the size of a poppy seed. The neural tube, which becomes the brain and spine, is forming.',
+    8: 'Your baby is about the size of a raspberry. Tiny fingers and toes are starting to form.',
+    12: 'Your baby is about the size of a lime. Reflexes are developing, and vital organs are mostly formed.',
+    16: 'Your baby is about the size of an avocado. You may start feeling the first flutters of movement soon.',
+    20: 'Halfway there! Your baby is about the size of a banana. This is a good time for an ultrasound check.',
+    24: 'Your baby is about the size of an ear of corn. Hearing is developing — they may respond to loud sounds.',
+    28: 'Your baby is about the size of an eggplant. Eyes can now open and close.',
+    32: 'Your baby is about the size of a squash. Bones are hardening, though the skull stays soft for birth.',
+    36: 'Your baby is about the size of a papaya. Most of the major development is complete — getting ready for birth.',
+    40: 'Your baby is considered full term! Any day now — make sure your hospital bag is packed.',
+  };
+
+  function closestWeekFact(week){
+    const keys = Object.keys(WEEKLY_FACTS).map(Number).sort((a,b) => a-b);
+    let chosen = keys[0];
+    for (const k of keys) { if (week >= k) chosen = k; }
+    return WEEKLY_FACTS[chosen];
+  }
+
+  async function openInsights(){
+    document.getElementById('insights-modal').style.display = 'flex';
+    try {
+      const me = await api('/api/users/me');
+      renderInsights(me.due_date);
+    } catch(err){}
+  }
+  function closeInsights(){
+    document.getElementById('insights-modal').style.display = 'none';
+  }
+
+  function renderInsights(dueDateStr){
+    const content = document.getElementById('insights-content');
+    if (!dueDateStr) {
+      document.getElementById('insights-due-date').value = '';
+      content.innerHTML = `<div class="empty-state"><i class="fa-solid fa-wave-square"></i><span>Add your due date above to see personalized weekly insights.</span></div>`;
+      return;
+    }
+    document.getElementById('insights-due-date').value = dueDateStr.slice(0, 10);
+    const dueDate = new Date(dueDateStr);
+    const today = new Date();
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    const weeksRemaining = Math.max(0, Math.round((dueDate - today) / msPerWeek));
+    const currentWeek = Math.min(40, Math.max(1, 40 - weeksRemaining));
+    content.innerHTML = `
+      <div class="hero" style="background:linear-gradient(120deg,var(--mother-red-1),var(--mother-red-2));padding:18px;margin-bottom:14px;">
+        <h1 style="font-size:1.3rem;">Week ${currentWeek} of 40</h1>
+        <p>${weeksRemaining > 0 ? weeksRemaining + ' week(s) to go until your due date.' : 'Your due date has arrived — any day now!'}</p>
+      </div>
+      <div class="tip-card">
+        <i class="fa-solid fa-baby"></i>
+        <div><div class="tt">This week</div><div class="td">${closestWeekFact(currentWeek)}</div></div>
+      </div>`;
+  }
+
+  async function saveDueDate(){
+    const due_date = document.getElementById('insights-due-date').value;
+    try {
+      const updated = await api('/api/users/me', { method:'PATCH', body: JSON.stringify({ due_date }) });
+      renderInsights(updated.due_date);
+    } catch(err){ alert(err.message); }
+  }
+
+  // ============== DIGITAL PASSPORT ==============
+  async function openPassport(){
+    document.getElementById('passport-modal').style.display = 'flex';
+    const box = document.getElementById('passport-content');
+    box.innerHTML = `<div style="text-align:center;padding:20px;color:#999;">Loading...</div>`;
+    try {
+      const me = await api('/api/users/me');
+      const appts = await api('/api/appointments');
+      const completed = appts.filter(a => a.status === 'completed').length;
+      box.innerHTML = `
+        <div style="text-align:center;margin-bottom:18px;">
+          <div class="avatar" style="width:64px;height:64px;font-size:1.5rem;margin:0 auto 10px;">${escapeHtml(me.name.charAt(0).toUpperCase())}</div>
+          <div style="font-weight:700;font-size:1.05rem;">${escapeHtml(me.name)}</div>
+          <div style="color:var(--text-mid);font-size:.8rem;">${escapeHtml(me.email)}</div>
+        </div>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:18px;">
+          <div class="stat-card" style="background:#fdeaea;"><div class="num" style="color:#c0272d;">${appts.length}</div><div class="label">Total Appointments</div></div>
+          <div class="stat-card" style="background:#e6f7ed;"><div class="num" style="color:#1c9a53;">${completed}</div><div class="label">Completed Visits</div></div>
+        </div>
+        <div class="panel-title" style="font-size:.9rem;">Visit History</div>
+        <div class="panel-box">
+          ${appts.length ? appts.map(a => `
+            <div class="list-row">
+              <div class="li-icon" style="background:#e9f0fe;color:#2e5df0;"><i class="fa-regular fa-calendar"></i></div>
+              <div class="li-text"><div class="t">${escapeHtml(a.reason || 'Appointment')}</div><div class="d">${a.scheduled_for || 'Date TBC'} · ${a.status}${a.provider_name ? ' · ' + escapeHtml(a.provider_name) : ''}</div></div>
+            </div>`).join('') : `<div class="empty-state"><i class="fa-regular fa-calendar"></i><span>No visits recorded yet.</span></div>`}
+        </div>`;
+    } catch(err){
+      box.innerHTML = `<div style="text-align:center;padding:20px;color:#c0272d;">${escapeHtml(err.message)}</div>`;
+    }
+  }
+  function closePassport(){
+    document.getElementById('passport-modal').style.display = 'none';
+  }
+
+  // ============== TRANSPORT / RIDES ==============
+  function openRides(){
+    document.getElementById('rides-modal').style.display = 'flex';
+    loadRides();
+  }
+  function closeRides(){
+    document.getElementById('rides-modal').style.display = 'none';
+  }
+  async function loadRides(){
+    const box = document.getElementById('rides-list');
+    try {
+      const rides = await api('/api/rides');
+      box.innerHTML = rides.length ? rides.map(r => `
+        <div class="list-row" style="padding:10px 4px;">
+          <div class="li-icon" style="background:#fdefe0;color:#e07a1f;"><i class="fa-solid fa-car"></i></div>
+          <div class="li-text"><div class="t">${escapeHtml(r.pickup)} → ${escapeHtml(r.destination)}</div><div class="d">${r.status} · ${new Date(r.created_at).toLocaleDateString()}</div></div>
+        </div>`).join('') : `<div class="empty-state"><i class="fa-solid fa-car"></i><span>No ride requests yet.</span></div>`;
+    } catch(err){}
+  }
+  async function submitRide(){
+    const pickup = document.getElementById('ride-pickup').value.trim();
+    const destination = document.getElementById('ride-destination').value.trim();
+    if (!pickup || !destination) return alert('Please fill in both pickup and destination.');
+    try {
+      await api('/api/rides', { method:'POST', body: JSON.stringify({ pickup, destination }) });
+      document.getElementById('ride-pickup').value = '';
+      document.getElementById('ride-destination').value = '';
+      loadRides();
+      refreshDashboard();
+    } catch(err){ alert(err.message); }
+  }
+
+  // ============== ACCESSIBILITY: LARGE TEXT ==============
+  function toggleLargeText(){
+    document.body.classList.toggle('large-text-mode');
+    const on = document.body.classList.contains('large-text-mode');
+    localStorage.setItem('mu_large_text', on ? '1' : '0');
+  }
+  if (localStorage.getItem('mu_large_text') === '1') {
+    document.body.classList.add('large-text-mode');
+  }
+
+  // ============== ADMIN: APPOINTMENTS & ALLOCATIONS ==============
+  let allProvidersCache = [];
+
+  async function openAdminAppointments(){
+    document.getElementById('adminappts-modal').style.display = 'flex';
+    const tbody = document.getElementById('adminappts-tbody');
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:16px;text-align:center;color:#999;">Loading...</td></tr>`;
+    try {
+      const [appts, providers] = await Promise.all([
+        api('/api/appointments'),
+        api('/api/users?role=doctor'),
+      ]);
+      const healthWorkers = await api('/api/users?role=health_worker');
+      allProvidersCache = [...providers, ...healthWorkers];
+
+      tbody.innerHTML = appts.length ? appts.map(a => `
+        <tr style="border-bottom:1px solid #f2f2f5;">
+          <td style="padding:8px;font-weight:600;">${escapeHtml(a.mother_name || 'Unknown')}</td>
+          <td style="padding:8px;color:#666;">${escapeHtml(a.reason || '—')}</td>
+          <td style="padding:8px;">
+            <select id="assign-${a.id}" style="padding:5px 8px;border-radius:6px;border:1px solid #ddd;font-size:.76rem;">
+              <option value="">${a.provider_name ? escapeHtml(a.provider_name) : 'Unassigned'}</option>
+              ${allProvidersCache.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:8px;">
+            <select id="apptstatus-${a.id}" style="padding:5px 8px;border-radius:6px;border:1px solid #ddd;font-size:.76rem;">
+              ${['pending','approved','assigned','completed','cancelled','rescheduled'].map(s => `<option value="${s}" ${s === a.status ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:8px;white-space:nowrap;">
+            <button onclick="saveApptRow(${a.id})" style="padding:6px 10px;border-radius:6px;background:#4c3fc9;color:#fff;font-size:.72rem;font-weight:600;">Save</button>
+          </td>
+        </tr>`).join('') : `<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No appointments yet.</td></tr>`;
+    } catch(err){
+      tbody.innerHTML = `<tr><td colspan="5" style="padding:16px;text-align:center;color:#c0272d;">${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+  function closeAdminAppointments(){
+    document.getElementById('adminappts-modal').style.display = 'none';
+  }
+
+  async function saveApptRow(id){
+    const providerId = document.getElementById('assign-' + id).value;
+    const status = document.getElementById('apptstatus-' + id).value;
+    try {
+      if (providerId) {
+        await api(`/api/appointments/${id}/assign`, { method:'PATCH', body: JSON.stringify({ provider_id: Number(providerId) }) });
+      }
+      await api(`/api/appointments/${id}/status`, { method:'PATCH', body: JSON.stringify({ status }) });
+      openAdminAppointments();
+      refreshDashboard();
+    } catch(err){ alert(err.message); }
+  }
+
+  // ============== ADMIN: COMPLAINTS ==============
+  async function openComplaints(){
+    document.getElementById('complaints-modal').style.display = 'flex';
+    const box = document.getElementById('complaints-list');
+    box.innerHTML = `<div style="padding:16px;text-align:center;color:#999;font-size:.8rem;">Loading...</div>`;
+    try {
+      const complaints = await api('/api/complaints');
+      box.innerHTML = complaints.length ? complaints.map(c => `
+        <div class="panel-box" style="padding:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+            <div>
+              <div style="font-weight:600;font-size:.86rem;">${escapeHtml(c.subject)}</div>
+              <div style="font-size:.76rem;color:var(--text-mid);margin-top:2px;">${escapeHtml(c.user_name || 'You')} · ${new Date(c.created_at).toLocaleDateString()}</div>
+              ${c.body ? `<div style="font-size:.8rem;margin-top:6px;color:#444;">${escapeHtml(c.body)}</div>` : ''}
+            </div>
+            <select id="complaint-status-${c.id}" onchange="saveComplaintStatus(${c.id})" style="padding:5px 8px;border-radius:6px;border:1px solid #ddd;font-size:.74rem;">
+              ${['open','in_review','resolved'].map(s => `<option value="${s}" ${s === c.status ? 'selected' : ''}>${s.replace('_',' ')}</option>`).join('')}
+            </select>
+          </div>
+        </div>`).join('') : `<div style="padding:20px;text-align:center;color:#999;font-size:.8rem;">No complaints filed.</div>`;
+    } catch(err){
+      box.innerHTML = `<div style="padding:16px;text-align:center;color:#c0272d;font-size:.8rem;">${escapeHtml(err.message)}</div>`;
+    }
+  }
+  function closeComplaints(){
+    document.getElementById('complaints-modal').style.display = 'none';
+  }
+  async function saveComplaintStatus(id){
+    const status = document.getElementById('complaint-status-' + id).value;
+    try { await api(`/api/complaints/${id}/status`, { method:'PATCH', body: JSON.stringify({ status }) }); refreshDashboard(); }
+    catch(err){ alert(err.message); }
+  }
+
+  // ============== DOCTOR: MY PATIENTS ==============
+  async function openMyPatients(){
+    document.getElementById('mypatients-modal').style.display = 'flex';
+    const box = document.getElementById('mypatients-list');
+    box.innerHTML = `<div style="padding:16px;text-align:center;color:#999;font-size:.8rem;">Loading...</div>`;
+    try {
+      const appts = await api('/api/appointments');
+      const seen = new Map();
+      appts.forEach(a => { if (!seen.has(a.mother_id)) seen.set(a.mother_id, a.mother_name); });
+      const patients = Array.from(seen.entries());
+      box.innerHTML = patients.length ? patients.map(([id, name]) => `
+        <div class="panel-box" style="display:flex;align-items:center;gap:12px;padding:14px;">
+          <div class="li-icon" style="background:#e9f0fe;color:#2e5df0;width:40px;height:40px;"><i class="fa-solid fa-user"></i></div>
+          <div style="flex:1;font-weight:600;font-size:.86rem;">${escapeHtml(name)}</div>
+          <button onclick="selectConversation(${id}, '${escapeHtml(name).replace(/'/g, "\\'")}'); closeMyPatients(); openMessages();" style="padding:7px 12px;border-radius:7px;background:#f0f1f5;color:#333;font-size:.72rem;font-weight:600;">Message</button>
+        </div>`).join('') : `<div style="padding:20px;text-align:center;color:#999;font-size:.8rem;">No patients assigned yet.</div>`;
+    } catch(err){
+      box.innerHTML = `<div style="padding:16px;text-align:center;color:#c0272d;font-size:.8rem;">${escapeHtml(err.message)}</div>`;
+    }
+  }
+  function closeMyPatients(){
+    document.getElementById('mypatients-modal').style.display = 'none';
+  }
+
+  // ============== MOTHER: REPORT AN ISSUE ==============
+  function openReportModal(){
+    document.getElementById('report-modal').style.display = 'flex';
+  }
+  function closeReportModal(){
+    document.getElementById('report-modal').style.display = 'none';
+    document.getElementById('report-subject').value = '';
+    document.getElementById('report-body').value = '';
+  }
+  async function submitReport(){
+    const subject = document.getElementById('report-subject').value.trim();
+    const body = document.getElementById('report-body').value.trim();
+    if (!subject) return alert('Please enter a subject.');
+    try {
+      await api('/api/complaints', { method:'POST', body: JSON.stringify({ subject, body }) });
+      closeReportModal();
+      alert('Thank you — your report has been submitted.');
     } catch(err){ alert(err.message); }
   }
 

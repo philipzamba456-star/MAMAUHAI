@@ -19,6 +19,7 @@ router.get('/admin', authRequired, requireRole('admin'), async (req, res) => {
     pending_appts: await count(`SELECT COUNT(*)::int AS c FROM appointments WHERE status = 'pending'`),
     messages: await count(`SELECT COUNT(*)::int AS c FROM messages`),
     complaints: await count(`SELECT COUNT(*)::int AS c FROM complaints WHERE status != 'resolved'`),
+    rides: await count(`SELECT COUNT(*)::int AS c FROM rides WHERE status = 'requested'`),
   });
 });
 

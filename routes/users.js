@@ -6,10 +6,19 @@ const router = express.Router();
 
 router.get('/me', authRequired, async (req, res) => {
   const { rows } = await pool.query(
-    'SELECT id, name, email, role, specialty, status, created_at FROM users WHERE id = $1',
+    'SELECT id, name, email, role, specialty, status, due_date, created_at FROM users WHERE id = $1',
     [req.user.id]
   );
   res.json(rows[0] || null);
+});
+
+router.patch('/me', authRequired, async (req, res) => {
+  const { due_date } = req.body;
+  const { rows } = await pool.query(
+    'UPDATE users SET due_date = $1 WHERE id = $2 RETURNING id, name, email, role, specialty, status, due_date',
+    [due_date || null, req.user.id]
+  );
+  res.json(rows[0]);
 });
 
 router.get('/', authRequired, requireRole('admin'), async (req, res) => {

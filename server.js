@@ -44,9 +44,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/appointments', require('./routes/appointments')(io));
 app.use('/api/messages', require('./routes/messages')(io));
+app.use('/api/rides', require('./routes/rides')(io));
+app.use('/api/mama-ai', require('./routes/mama-ai')());
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/mama-ai', require('./routes/mama-ai'));
 
 app.get('/api/health', async (req, res) => {
   let dbStatus = 'unknown';

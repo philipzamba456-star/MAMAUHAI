@@ -56,13 +56,46 @@ You can also register new accounts via `POST /api/auth/register`.
 
 - **Real authentication** — passwords are hashed with bcrypt, sessions use JWTs (7-day expiry).
 - **Role-based dashboards** — Mother, Doctor/Health Worker, and Admin each see their own live stats pulled from the database.
-- **Appointment booking** — a mother can book an appointment from the dashboard; it's saved to SQLite and instantly notifies all admins over a live Socket.io connection (no refresh needed).
-- **Admin assignment** — admins can assign a provider to an appointment via `PATCH /api/appointments/:id/assign` (not yet wired to a UI button — see "Next steps").
+- **Appointment booking** — a mother can book an appointment from the dashboard; it's saved to Postgres and instantly notifies all admins over Socket.io (no refresh needed).
+- **Admin appointment management** — a full Appointments & Allocations view lets admins assign a provider and change status on any appointment.
 - **Status updates** — doctors can mark an assigned appointment "completed" from their dashboard; the mother is notified live.
-- **Notifications** — a live bell icon on the Mother dashboard shows unread counts and a dropdown list, updated over Socket.io as things happen.
-- **User management API** — admins can list, search, filter, edit role/status, and delete users (`/api/users`), though there's no admin UI table wired up yet — only the "Recent Registrations" list.
+- **Messaging** — real conversations between mothers, doctors, health workers, and admins, with a live thread view, unread badges, and instant delivery over Socket.io. A "new conversation" picker scopes who you can message based on your role (mothers see their providers, doctors see their patients, admins see everyone).
+- **Find a Doctor** — mothers can browse real doctors/health workers and either message them or start booking an appointment with them pre-filled.
+- **Admin user management** — a full table of every real user: search, filter by role, edit role/status inline, delete. Suspending an account genuinely blocks that user's login until reactivated.
+- **Doctor's "My Patients"** — a real list of the doctor's assigned patients, derived from their appointments, with a one-click message button.
+- **Complaints** — mothers can file a complaint/report from their dashboard; admins see and resolve all complaints from theirs.
+- **Mama AI** — a real AI chat assistant (see below) with a polished, friendly interface: gradient bubbles, typing indicator, and suggested-question chips.
+- **Health Insights** — a mother sets her due date, and the app computes her current pregnancy week and shows a relevant fact about her baby's development that week.
+- **Digital Passport** — a mother's own profile plus her full visit history in one place, pulled live from the database.
+- **Transport** — mothers can request a ride (pickup/destination), see their ride history, and admins are notified of new requests live; ride counts show up in the admin dashboard.
+- **Hospitals / Services / Education Center / Costs** — informational directories and content, written for a Ugandan context (real hospital names, realistic cost estimates in UGX, practical pregnancy/newborn guidance).
+- **Accessibility: Large Text** — a genuine site-wide font-size toggle for the mother dashboard, persisted across visits.
+- **Notifications** — a live bell icon shows unread counts and a dropdown list, updated over Socket.io as things happen across appointments, rides, and messages.
 
-## API reference
+### Setting up Mama AI
+
+Mama AI is a real integration with Anthropic's Claude API, not a canned/scripted chatbot. To activate it:
+
+1. Get an API key at https://console.anthropic.com/settings/keys
+2. Add it as an environment variable: `ANTHROPIC_API_KEY=sk-ant-...`
+   - Locally: add it to your `.env` file
+   - On Render: add it under your web service's **Environment** tab
+3. Optionally set `CLAUDE_MODEL` to choose a specific model (defaults to `claude-sonnet-5`)
+
+Without a key set, Mama AI still opens and looks complete, but replying shows a friendly "not configured yet" message instead of crashing — so the rest of the app works fine even before you've added a key.
+
+**Cost note:** every message sent to Mama AI is a real API call billed to whichever Anthropic account owns the key. There's no per-user rate limiting built in yet — for a public-facing deployment, consider adding request throttling before wide release.
+
+## Still not built (or intentionally simplified)
+
+- File/image/voice-note sharing in messages
+- Content management for admins (publishing/editing articles, announcements) — Education Center content is currently static, not admin-editable
+- Security/audit logs, login history
+- Doctor notes, prescriptions, lab results
+- Admin ability to add new provider accounts through the UI (the API supports it via `/api/auth/register`, just no button wired up yet)
+- Ride requests don't have a real driver-matching system — they're logged and visible to admins, but there's no dispatch logic
+- Offline handling / PWA support
+- Production-grade rate limiting on any endpoint, including Mama AI
 
 All endpoints are under `/api`. Authenticated routes require `Authorization: Bearer <token>`.
 
@@ -75,6 +108,7 @@ All endpoints are under `/api`. Authenticated routes require `Authorization: Bea
 | GET    | /api/users/providers                | any logged-in | List doctors + health workers     |
 | PATCH  | /api/users/:id                     | admin         | Update role/status/name           |
 | DELETE | /api/users/:id                     | admin         | Delete a user                     |
+| PATCH  | /api/users/me                      | any logged-in | Update your own profile (e.g. due_date) |
 | GET    | /api/appointments                  | any logged-in | List your scoped appointments     |
 | POST   | /api/appointments                  | mother        | Book an appointment               |
 | PATCH  | /api/appointments/:id/assign        | admin         | Assign a provider                 |
@@ -82,6 +116,10 @@ All endpoints are under `/api`. Authenticated routes require `Authorization: Bea
 | GET    | /api/messages/conversations         | any logged-in | Your conversation list            |
 | GET    | /api/messages/thread/:userId        | any logged-in | Message thread with a user        |
 | POST   | /api/messages                      | any logged-in | Send a message                    |
+| GET    | /api/rides                         | any logged-in | Your ride requests (or all, if admin) |
+| POST   | /api/rides                         | mother        | Request a ride                    |
+| PATCH  | /api/rides/:id/status                | admin         | Update ride status                |
+| POST   | /api/mama-ai                       | any logged-in | Chat with Mama AI                 |
 | GET    | /api/notifications                 | any logged-in | Your notifications                |
 | PATCH  | /api/notifications/:id/read         | any logged-in | Mark one as read                  |
 | GET    | /api/complaints                    | any logged-in | Your complaints (or all, if admin)|
@@ -90,21 +128,6 @@ All endpoints are under `/api`. Authenticated routes require `Authorization: Bea
 | GET    | /api/stats/admin                   | admin         | Dashboard stat cards               |
 | GET    | /api/stats/doctor                  | doctor/health | Dashboard stat cards               |
 | GET    | /api/stats/mother                  | mother        | Dashboard stat cards               |
-
-## Next steps / not yet built
-
-This covers the core of your spec (real-time sync for appointments/notifications, role dashboards, secure auth), but the original document described a much bigger system. Not yet implemented:
-
-- Messaging UI (the API exists at `/api/messages`, but no chat interface is wired into the dashboards yet)
-- File/image/voice-note sharing in messages
-- Full admin UI for user management, content management, security/audit logs, and analytics charts
-- Doctor notes, prescriptions, lab results
-- Health Worker–specific views (currently shares the Doctor dashboard)
-- Ride booking, hospital directory, education center content
-- Offline handling / PWA support
-- Production-grade database (SQLite is great for development; for real deployment with concurrent writers, consider PostgreSQL)
-
-Happy to build out any of these next — the messaging UI and admin user-management table are probably the highest-value next additions.
 
 ## Docker (fallback if a local Postgres install is giving you trouble)
 
