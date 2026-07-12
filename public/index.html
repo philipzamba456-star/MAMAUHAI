@@ -266,8 +266,8 @@
     <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
     <div class="nav-item"><i class="fa-solid fa-user-nurse"></i>Allocations</div>
     <div class="nav-item"><i class="fa-solid fa-user-doctor"></i>Providers</div>
-    <div class="nav-item"><i class="fa-solid fa-user-gear"></i>User Mgmt</div>
-    <div class="nav-item"><i class="fa-regular fa-envelope"></i>Messages</div>
+    <div class="nav-item" onclick="openUserMgmt()"><i class="fa-solid fa-user-gear"></i>User Mgmt</div>
+    <div class="nav-item" onclick="openMessages()"><i class="fa-regular fa-envelope"></i>Messages</div>
     <div class="nav-item"><i class="fa-regular fa-circle-question"></i>Complaints</div>
     <div class="sidebar-spacer"></div>
     <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
@@ -293,7 +293,7 @@
       <div>
         <div class="panel-title" style="color:var(--admin-2);">Portal Controls</div>
         <div class="panel-box">
-          <div class="list-row">
+          <div class="list-row" onclick="openUserMgmt()" style="cursor:pointer;">
             <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-users"></i></div>
             <div class="li-text"><div class="t">Manage Users</div><div class="d">View, change roles &amp; manage all users</div></div>
           </div>
@@ -318,7 +318,7 @@
             <i class="fa-regular fa-user"></i>
             <span>No users registered yet.</span>
           </div>
-          <a class="view-all">View All Users →</a>
+          <a class="view-all" onclick="openUserMgmt()" style="cursor:pointer;">View All Users →</a>
         </div>
       </div>
     </div>
@@ -335,7 +335,7 @@
     <div class="nav-item active"><i class="fa-solid fa-table-cells"></i>Dashboard</div>
     <div class="nav-item"><i class="fa-solid fa-user-group"></i>My Patients</div>
     <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
-    <div class="nav-item"><i class="fa-regular fa-comment-dots"></i>Messages</div>
+    <div class="nav-item" onclick="openMessages()"><i class="fa-regular fa-comment-dots"></i>Messages</div>
     <div class="sidebar-spacer"></div>
     <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
   </aside>
@@ -380,7 +380,7 @@
     <div class="nav-item active"><i class="fa-solid fa-house"></i>Dashboard</div>
     <div class="nav-item"><i class="fa-solid fa-wand-magic-sparkles"></i>Mama AI</div>
     <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
-    <div class="nav-item"><i class="fa-solid fa-user-doctor"></i>Find Doctors</div>
+    <div class="nav-item" onclick="openProviders()"><i class="fa-solid fa-user-doctor"></i>Find Doctors</div>
     <div class="nav-item"><i class="fa-solid fa-hospital"></i>Hospitals</div>
     <div class="nav-item"><i class="fa-solid fa-heart"></i>Services</div>
     <div class="nav-item"><i class="fa-solid fa-wave-square"></i>Health Insights</div>
@@ -410,15 +410,15 @@
       <p id="mother-hero-sub">No upcoming appointments. Book one today!</p>
       <div class="hero-actions">
         <div class="hero-btn" onclick="openBooking()"><i class="fa-regular fa-calendar"></i>Book Appointment</div>
-        <div class="hero-btn"><i class="fa-solid fa-user-doctor"></i>Find a Doctor</div>
+        <div class="hero-btn" onclick="openProviders()"><i class="fa-solid fa-user-doctor"></i>Find a Doctor</div>
       </div>
     </div>
 
     <div class="qa-grid">
       <div class="qa-card" onclick="openBooking()" style="cursor:pointer;"><div class="qi" style="background:#2e5df0;"><i class="fa-regular fa-calendar"></i></div><div class="qt">Book Appt</div></div>
-      <div class="qa-card"><div class="qi" style="background:#c0272d;"><i class="fa-solid fa-user-doctor"></i></div><div class="qt">Find Doctor</div></div>
+      <div class="qa-card" onclick="openProviders()" style="cursor:pointer;"><div class="qi" style="background:#c0272d;"><i class="fa-solid fa-user-doctor"></i></div><div class="qt">Find Doctor</div></div>
       <div class="qa-card"><div class="qi" style="background:#e07a1f;"><i class="fa-solid fa-car"></i></div><div class="qt">Book Ride</div></div>
-      <div class="qa-card"><div class="qi" style="background:#1c9a53;"><i class="fa-regular fa-comment-dots"></i></div><div class="qt">Messages</div></div>
+      <div class="qa-card" onclick="openMessages()" style="cursor:pointer;"><div class="qi" style="background:#1c9a53;"><i class="fa-regular fa-comment-dots"></i></div><div class="qt">Messages</div></div>
       <div class="qa-card"><div class="qi" style="background:#8b3fc9;"><i class="fa-solid fa-hospital"></i></div><div class="qt">Hospitals</div></div>
       <div class="qa-card"><div class="qi" style="background:#d63a7e;"><i class="fa-solid fa-receipt"></i></div><div class="qt">Costs</div></div>
       <div class="qa-card"><div class="qi" style="background:#c0272d;"><i class="fa-solid fa-heart"></i></div><div class="qt">Services</div></div>
@@ -451,6 +451,87 @@
       <div><div class="tt">Daily Tip</div><div class="td">Stay hydrated and take short walks — gentle movement supports a healthy pregnancy.</div></div>
     </div>
   </main>
+</div>
+
+<!-- ================= MESSAGES MODAL (all roles) ================= -->
+<div id="messages-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;width:760px;max-width:94vw;height:560px;max-height:88vh;display:flex;overflow:hidden;">
+    <div style="width:260px;border-right:1px solid #eee;display:flex;flex-direction:column;">
+      <div style="padding:16px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:.95rem;">Messages</h3>
+        <i class="fa-solid fa-xmark" onclick="closeMessages()" style="cursor:pointer;color:#999;"></i>
+      </div>
+      <div id="msg-conversations" style="flex:1;overflow-y:auto;"></div>
+      <div style="padding:10px;border-top:1px solid #eee;">
+        <button onclick="openNewChatPicker()" style="width:100%;padding:9px;border-radius:8px;background:#f0f1f5;color:#333;font-size:.78rem;font-weight:600;">+ New conversation</button>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;">
+      <div id="msg-thread-header" style="padding:16px;border-bottom:1px solid #eee;font-weight:600;font-size:.88rem;color:#333;">Select a conversation</div>
+      <div id="msg-thread" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;"></div>
+      <div style="padding:12px;border-top:1px solid #eee;display:flex;gap:8px;">
+        <input id="msg-input" placeholder="Type a message..." style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid #ddd;font-size:.85rem;" onkeydown="if(event.key==='Enter') sendChatMessage();">
+        <button onclick="sendChatMessage()" style="padding:10px 16px;border-radius:8px;background:#c0272d;color:#fff;font-weight:600;">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= NEW CHAT PICKER (pick who to message) ================= -->
+<div id="newchat-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:80;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:340px;max-width:90vw;max-height:70vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="font-size:.95rem;">Start a conversation</h3>
+      <i class="fa-solid fa-xmark" onclick="closeNewChatPicker()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div id="newchat-list" style="overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
+
+<!-- ================= PROVIDER DIRECTORY MODAL (mother) ================= -->
+<div id="providers-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:440px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:1.05rem;color:var(--mother-teal-1);">Find a Doctor</h3>
+      <i class="fa-solid fa-xmark" onclick="closeProviders()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div id="providers-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
+
+<!-- ================= USER MANAGEMENT MODAL (admin) ================= -->
+<div id="usermgmt-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:20px;width:760px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:1.05rem;color:var(--admin-2);">Manage Users</h3>
+      <i class="fa-solid fa-xmark" onclick="closeUserMgmt()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input id="usermgmt-search" placeholder="Search name or email..." style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;" onkeydown="if(event.key==='Enter') loadUserMgmt();">
+      <select id="usermgmt-role-filter" style="padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;" onchange="loadUserMgmt()">
+        <option value="">All roles</option>
+        <option value="mother">Mother</option>
+        <option value="doctor">Doctor</option>
+        <option value="health_worker">Health Worker</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button onclick="loadUserMgmt()" style="padding:9px 16px;border-radius:8px;background:#4c3fc9;color:#fff;font-weight:600;font-size:.82rem;">Search</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;">
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+        <thead>
+          <tr style="text-align:left;color:#888;border-bottom:1px solid #eee;">
+            <th style="padding:8px;">Name</th>
+            <th style="padding:8px;">Email</th>
+            <th style="padding:8px;">Role</th>
+            <th style="padding:8px;">Status</th>
+            <th style="padding:8px;"></th>
+          </tr>
+        </thead>
+        <tbody id="usermgmt-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -522,7 +603,12 @@
     });
     socket.on('appointment:new', () => refreshDashboard());
     socket.on('appointment:update', () => refreshDashboard());
-    socket.on('message:new', () => refreshDashboard());
+    socket.on('message:new', (m) => {
+      refreshDashboard();
+      if (activeRecipientId && (m.sender_id === activeRecipientId || m.recipient_id === activeRecipientId)) {
+        loadThread();
+      }
+    });
   }
 
   function enterApp(){
@@ -658,6 +744,192 @@
   function toggleNotifPanel(){
     const panel = document.getElementById('notif-panel');
     panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  }
+
+  // ============== MESSAGING ==============
+  let activeRecipientId = null;
+  let activeRecipientName = null;
+
+  function openMessages(){
+    document.getElementById('messages-modal').style.display = 'flex';
+    loadConversations();
+  }
+  function closeMessages(){
+    document.getElementById('messages-modal').style.display = 'none';
+    activeRecipientId = null;
+  }
+
+  async function loadConversations(){
+    try {
+      const convos = await api('/api/messages/conversations');
+      const box = document.getElementById('msg-conversations');
+      box.innerHTML = convos.length ? convos.map(c => `
+        <div class="list-row" style="cursor:pointer;padding:12px 16px;" onclick="selectConversation(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">
+          <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-user"></i></div>
+          <div class="li-text" style="min-width:0;">
+            <div class="t">${escapeHtml(c.name)} ${c.unread > 0 ? `<span style="background:#c0272d;color:#fff;font-size:.62rem;padding:1px 6px;border-radius:8px;margin-left:4px;">${c.unread}</span>` : ''}</div>
+            <div class="d" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.last_message || 'No messages yet')}</div>
+          </div>
+        </div>`).join('') : `<div style="padding:20px;text-align:center;color:#999;font-size:.8rem;">No conversations yet. Start one below.</div>`;
+    } catch(err){}
+  }
+
+  async function selectConversation(userId, name){
+    activeRecipientId = userId;
+    activeRecipientName = name;
+    document.getElementById('msg-thread-header').textContent = name;
+    closeNewChatPicker();
+    await loadThread();
+  }
+
+  async function loadThread(){
+    if (!activeRecipientId) return;
+    try {
+      const messages = await api('/api/messages/thread/' + activeRecipientId);
+      const box = document.getElementById('msg-thread');
+      box.innerHTML = messages.map(m => {
+        const mine = m.sender_id === currentUser.id;
+        return `<div style="align-self:${mine ? 'flex-end' : 'flex-start'};max-width:70%;">
+          <div style="background:${mine ? '#c0272d' : '#f0f1f5'};color:${mine ? '#fff' : '#333'};padding:9px 13px;border-radius:12px;font-size:.85rem;">${escapeHtml(m.body)}</div>
+          <div style="font-size:.65rem;color:#999;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${new Date(m.created_at).toLocaleString()}</div>
+        </div>`;
+      }).join('');
+      box.scrollTop = box.scrollHeight;
+      loadConversations();
+    } catch(err){}
+  }
+
+  async function sendChatMessage(){
+    const input = document.getElementById('msg-input');
+    const body = input.value.trim();
+    if (!body || !activeRecipientId) return;
+    try {
+      await api('/api/messages', { method:'POST', body: JSON.stringify({ recipient_id: activeRecipientId, body }) });
+      input.value = '';
+      loadThread();
+    } catch(err){ alert(err.message); }
+  }
+
+  async function openNewChatPicker(){
+    document.getElementById('newchat-modal').style.display = 'flex';
+    const box = document.getElementById('newchat-list');
+    box.innerHTML = `<div style="padding:16px;text-align:center;color:#999;font-size:.8rem;">Loading...</div>`;
+    try {
+      let candidates = [];
+      if (currentUser.role === 'mother'){
+        const providers = await api('/api/users/providers');
+        candidates = providers.map(p => ({ id: p.id, name: p.name, sub: p.role === 'doctor' ? (p.specialty || 'Doctor') : 'Health Worker' }));
+      } else if (currentUser.role === 'doctor' || currentUser.role === 'health_worker'){
+        const appts = await api('/api/appointments');
+        const seen = new Map();
+        appts.forEach(a => { if (!seen.has(a.mother_id)) seen.set(a.mother_id, a.mother_name); });
+        candidates = Array.from(seen.entries()).map(([id, name]) => ({ id, name, sub: 'Patient' }));
+      } else {
+        const users = await api('/api/users');
+        candidates = users.filter(u => u.id !== currentUser.id).map(u => ({ id: u.id, name: u.name, sub: u.role }));
+      }
+      box.innerHTML = candidates.length ? candidates.map(c => `
+        <div class="list-row" style="cursor:pointer;" onclick="selectConversation(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">
+          <div class="li-icon" style="background:#ecebfc;color:#4c3fc9;"><i class="fa-solid fa-user"></i></div>
+          <div class="li-text"><div class="t">${escapeHtml(c.name)}</div><div class="d">${escapeHtml(c.sub)}</div></div>
+        </div>`).join('') : `<div style="padding:16px;text-align:center;color:#999;font-size:.8rem;">No one available to message yet.</div>`;
+    } catch(err){
+      box.innerHTML = `<div style="padding:16px;text-align:center;color:#c0272d;font-size:.8rem;">${escapeHtml(err.message)}</div>`;
+    }
+  }
+  function closeNewChatPicker(){
+    document.getElementById('newchat-modal').style.display = 'none';
+  }
+
+  // ============== PROVIDER DIRECTORY (mother) ==============
+  async function openProviders(){
+    document.getElementById('providers-modal').style.display = 'flex';
+    const box = document.getElementById('providers-list');
+    box.innerHTML = `<div style="padding:16px;text-align:center;color:#999;font-size:.8rem;">Loading...</div>`;
+    try {
+      const providers = await api('/api/users/providers');
+      box.innerHTML = providers.length ? providers.map(p => `
+        <div class="panel-box" style="display:flex;align-items:center;gap:12px;padding:14px;">
+          <div class="li-icon" style="background:#fdeaea;color:#c0272d;width:44px;height:44px;"><i class="fa-solid fa-user-doctor"></i></div>
+          <div style="flex:1;">
+            <div class="t" style="font-weight:600;font-size:.88rem;">${escapeHtml(p.name)}</div>
+            <div class="d" style="font-size:.75rem;color:var(--text-mid);">${p.role === 'doctor' ? (escapeHtml(p.specialty || 'Doctor')) : 'Health Worker'}</div>
+          </div>
+          <button onclick="selectConversation(${p.id}, '${escapeHtml(p.name).replace(/'/g, "\\'")}'); closeProviders(); openMessages();" style="padding:7px 12px;border-radius:7px;background:#f0f1f5;color:#333;font-size:.72rem;font-weight:600;">Message</button>
+          <button onclick="bookWithProvider('${escapeHtml(p.name).replace(/'/g, "\\'")}')" style="padding:7px 12px;border-radius:7px;background:var(--mother-red-1);color:#fff;font-size:.72rem;font-weight:600;">Book</button>
+        </div>`).join('') : `<div style="padding:20px;text-align:center;color:#999;font-size:.8rem;">No providers available right now.</div>`;
+    } catch(err){
+      box.innerHTML = `<div style="padding:16px;text-align:center;color:#c0272d;font-size:.8rem;">${escapeHtml(err.message)}</div>`;
+    }
+  }
+  function closeProviders(){
+    document.getElementById('providers-modal').style.display = 'none';
+  }
+  function bookWithProvider(name){
+    closeProviders();
+    openBooking();
+    document.getElementById('booking-reason').value = `Requested doctor: ${name}`;
+  }
+
+  // ============== ADMIN: USER MANAGEMENT ==============
+  function openUserMgmt(){
+    document.getElementById('usermgmt-modal').style.display = 'flex';
+    loadUserMgmt();
+  }
+  function closeUserMgmt(){
+    document.getElementById('usermgmt-modal').style.display = 'none';
+  }
+
+  async function loadUserMgmt(){
+    const tbody = document.getElementById('usermgmt-tbody');
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:16px;text-align:center;color:#999;">Loading...</td></tr>`;
+    try {
+      const q = document.getElementById('usermgmt-search').value.trim();
+      const role = document.getElementById('usermgmt-role-filter').value;
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (role) params.set('role', role);
+      const users = await api('/api/users' + (params.toString() ? '?' + params.toString() : ''));
+      tbody.innerHTML = users.length ? users.map(u => `
+        <tr style="border-bottom:1px solid #f2f2f5;" id="user-row-${u.id}">
+          <td style="padding:8px;font-weight:600;">${escapeHtml(u.name)}</td>
+          <td style="padding:8px;color:#666;">${escapeHtml(u.email)}</td>
+          <td style="padding:8px;">
+            <select id="role-${u.id}" style="padding:5px 8px;border-radius:6px;border:1px solid #ddd;font-size:.78rem;">
+              ${['mother','doctor','health_worker','admin'].map(r => `<option value="${r}" ${r === u.role ? 'selected' : ''}>${r}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:8px;">
+            <select id="status-${u.id}" style="padding:5px 8px;border-radius:6px;border:1px solid #ddd;font-size:.78rem;">
+              ${['active','locked','suspended'].map(s => `<option value="${s}" ${s === u.status ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td style="padding:8px;white-space:nowrap;">
+            <button onclick="saveUserRow(${u.id})" style="padding:6px 10px;border-radius:6px;background:#4c3fc9;color:#fff;font-size:.72rem;font-weight:600;margin-right:4px;">Save</button>
+            <button onclick="deleteUserRow(${u.id})" style="padding:6px 10px;border-radius:6px;background:#fdeaea;color:#c0272d;font-size:.72rem;font-weight:600;">Delete</button>
+          </td>
+        </tr>`).join('') : `<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No users found.</td></tr>`;
+    } catch(err){
+      tbody.innerHTML = `<tr><td colspan="5" style="padding:16px;text-align:center;color:#c0272d;">${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  async function saveUserRow(id){
+    const role = document.getElementById('role-' + id).value;
+    const status = document.getElementById('status-' + id).value;
+    try {
+      await api('/api/users/' + id, { method:'PATCH', body: JSON.stringify({ role, status }) });
+      refreshDashboard();
+    } catch(err){ alert(err.message); }
+  }
+
+  async function deleteUserRow(id){
+    if (!confirm('Delete this user? This cannot be undone.')) return;
+    try {
+      await api('/api/users/' + id, { method:'DELETE' });
+      loadUserMgmt();
+      refreshDashboard();
+    } catch(err){ alert(err.message); }
   }
 
   function escapeHtml(str){
