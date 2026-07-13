@@ -1,5 +1,5 @@
 const express = require('express');
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { authRequired } = require('../middleware/auth');
 
 const router = express.Router();
@@ -34,15 +34,30 @@ For every other question — including ordinary symptom questions, "is X normal,
 
 The only content limits: don't state a specific diagnosis for her individual case (explain general possibilities instead), and don't give her an exact personal prescription dose (general/typical usage info is fine). Never suggest skipping a scheduled appointment.`;
 
+function parseMarker(rawText) {
+  const needsProvider = /\[\[NEEDS_PROVIDER\]\]\s*$/.test(rawText.trim());
+  const reply = rawText.replace(/\[\[NEEDS_PROVIDER\]\]\s*$/, '').trim();
+  return { reply, needsProvider };
+}
+
 module.exports = () => {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  const model = process.env.CLAUDE_MODEL || 'claude-sonnet-5';
-  const client = apiKey ? new Anthropic({ apiKey }) : null;
+  // Preferred order: Gemini (free, no card needed) -> Groq (free, runs Meta's Llama models).
+  // Whichever key is set first in this order is the one used.
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY;
+
+  const provider = geminiKey ? 'gemini' : groqKey ? 'groq' : null;
+
+  const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+
+  const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
 
   router.post('/', authRequired, async (req, res) => {
-    if (!client) {
+    if (!provider) {
       return res.status(503).json({
-        error: 'Mama AI is not configured yet. An administrator needs to set the ANTHROPIC_API_KEY environment variable.',
+        error:
+          'Mama AI is not configured yet. An administrator needs to set GEMINI_API_KEY (recommended, free, no credit card) or GROQ_API_KEY.',
       });
     }
 
@@ -51,7 +66,6 @@ module.exports = () => {
       return res.status(400).json({ error: 'message is required.' });
     }
 
-    // Cap history length and message size defensively
     const priorMessages = Array.isArray(history) ? history.slice(-20) : [];
     const trimmed = [...priorMessages, { role: 'user', content: message }].map((m) => ({
       role: m.role === 'assistant' ? 'assistant' : 'user',
@@ -59,22 +73,43 @@ module.exports = () => {
     }));
 
     try {
-      const response = await client.messages.create({
-        model,
-        max_tokens: 700,
-        system: SYSTEM_PROMPT,
-        messages: trimmed,
-      });
+      let rawText;
 
-      const rawText = response.content
-        .filter((block) => block.type === 'text')
-        .map((block) => block.text)
-        .join('\n');
+      if (provider === 'gemini') {
+        const model = genAI.getGenerativeModel({ model: geminiModel, systemInstruction: SYSTEM_PROMPT });
+        // Gemini expects role 'model' instead of 'assistant', and history separate from the new message.
+        const geminiHistory = trimmed.slice(0, -1).map((m) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        }));
+        const chat = model.startChat({ history: geminiHistory });
+        const result = await chat.sendMessage(message.slice(0, 4000));
+        rawText = result.response.text();
+      } else {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${groqKey}`,
+          },
+          body: JSON.stringify({
+            model: groqModel,
+            max_tokens: 700,
+            messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...trimmed],
+          }),
+        });
 
-      const needsProvider = /\[\[NEEDS_PROVIDER\]\]\s*$/.test(rawText.trim());
-      const reply = rawText.replace(/\[\[NEEDS_PROVIDER\]\]\s*$/, '').trim();
+        if (!response.ok) {
+          const errBody = await response.text();
+          throw new Error(`Groq API error (${response.status}): ${errBody.slice(0, 300)}`);
+        }
 
-      res.json({ reply, needsProvider });
+        const data = await response.json();
+        rawText = data.choices?.[0]?.message?.content || '';
+      }
+
+      const { reply, needsProvider } = parseMarker(rawText);
+      res.json({ reply, needsProvider, provider });
     } catch (err) {
       console.error('Mama AI error:', err.message);
       res.status(502).json({ error: 'Mama AI is having trouble responding right now. Please try again in a moment.' });

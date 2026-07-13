@@ -16,7 +16,7 @@ services:
         fromDatabase:
           name: mama-uhai-db
           property: connectionString
-      - key: ANTHROPIC_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
-      - key: CLAUDE_MODEL
-        value: claude-sonnet-5
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash

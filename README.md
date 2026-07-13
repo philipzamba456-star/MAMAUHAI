@@ -74,17 +74,23 @@ You can also register new accounts via `POST /api/auth/register`.
 
 ### Setting up Mama AI
 
-Mama AI is a real integration with Anthropic's Claude API, not a canned/scripted chatbot. To activate it:
+Mama AI is a real integration with an AI provider, not a canned/scripted chatbot. It supports two free-tier options — use whichever you prefer:
 
-1. Get an API key at https://console.anthropic.com/settings/keys
-2. Add it as an environment variable: `ANTHROPIC_API_KEY=sk-ant-...`
+**Option A: Google Gemini (recommended — free, no credit card required)**
+1. Get a key at https://aistudio.google.com/app/apikey (just sign in with a Google account)
+2. Add it as an environment variable: `GEMINI_API_KEY=...`
    - Locally: add it to your `.env` file
    - On Render: add it under your web service's **Environment** tab
-3. Optionally set `CLAUDE_MODEL` to choose a specific model (defaults to `claude-sonnet-5`)
+3. Optionally set `GEMINI_MODEL` to choose a specific model (defaults to `gemini-2.5-flash`, which is free)
 
-Without a key set, Mama AI still opens and looks complete, but replying shows a friendly "not configured yet" message instead of crashing — so the rest of the app works fine even before you've added a key.
+**Option B: Groq (also free, runs Meta's Llama models)**
+1. Get a key at https://console.groq.com/keys
+2. Add it as `GROQ_API_KEY=...`
+3. Optionally set `GROQ_MODEL` (defaults to `llama-3.3-70b-versatile`)
 
-**Cost note:** every message sent to Mama AI is a real API call billed to whichever Anthropic account owns the key. There's no per-user rate limiting built in yet — for a public-facing deployment, consider adding request throttling before wide release.
+If both are set, Gemini is used. Without either key set, Mama AI still opens and looks complete, but replying shows a friendly "not configured yet" message instead of crashing — so the rest of the app works fine even before you've added a key.
+
+**Free tier limits to know about:** Gemini's free tier is generously sized for a small app (roughly 10 requests/minute, 1,500/day as of mid-2026 — check https://ai.google.dev/gemini-api/docs/rate-limits for current numbers), but it isn't unlimited. There's no per-user rate limiting built into this app yet — for a public-facing deployment with real traffic, consider adding request throttling, or upgrading to a paid tier on whichever provider you choose.
 
 ## Still not built (or intentionally simplified)
 
