@@ -42,4 +42,39 @@ router.get('/mother', authRequired, requireRole('mother'), async (req, res) => {
   });
 });
 
+router.get('/analytics', authRequired, requireRole('admin'), async (req, res) => {
+  const usersByRole = await pool.query(
+    `SELECT role, COUNT(*)::int AS count FROM users GROUP BY role`
+  );
+
+  const apptsByStatus = await pool.query(
+    `SELECT status, COUNT(*)::int AS count FROM appointments GROUP BY status`
+  );
+
+  // Appointments booked per day, last 30 days
+  const apptsByDay = await pool.query(`
+    SELECT to_char(d.day, 'YYYY-MM-DD') AS day, COALESCE(COUNT(a.id), 0)::int AS count
+    FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, INTERVAL '1 day') AS d(day)
+    LEFT JOIN appointments a ON date_trunc('day', a.created_at) = d.day
+    GROUP BY d.day
+    ORDER BY d.day
+  `);
+
+  // Mother signups per week, last 8 weeks
+  const growthByWeek = await pool.query(`
+    SELECT to_char(w.week, 'YYYY-MM-DD') AS week, COALESCE(COUNT(u.id), 0)::int AS count
+    FROM generate_series(date_trunc('week', CURRENT_DATE) - INTERVAL '7 weeks', date_trunc('week', CURRENT_DATE), INTERVAL '1 week') AS w(week)
+    LEFT JOIN users u ON date_trunc('week', u.created_at) = w.week AND u.role = 'mother'
+    GROUP BY w.week
+    ORDER BY w.week
+  `);
+
+  res.json({
+    users_by_role: usersByRole.rows,
+    appointments_by_status: apptsByStatus.rows,
+    appointments_by_day: apptsByDay.rows,
+    mother_growth_by_week: growthByWeek.rows,
+  });
+});
+
 module.exports = router;

@@ -108,10 +108,26 @@ async function init() {
       status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','in_review','resolved')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS health_logs (
+      id SERIAL PRIMARY KEY,
+      mother_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      weight_kg NUMERIC,
+      bp_systolic INTEGER,
+      bp_diastolic INTEGER,
+      blood_sugar NUMERIC,
+      temperature_c NUMERIC,
+      mood TEXT,
+      symptoms TEXT,
+      baby_movements INTEGER,
+      water_intake_ml INTEGER,
+      logged_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `);
 
-  // Migration for databases created before due_date existed
+  // Migrations for databases created before these columns existed
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS due_date DATE;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false;`);
 
   const { rows } = await pool.query('SELECT COUNT(*)::int AS c FROM users');
   if (rows[0].c === 0) {

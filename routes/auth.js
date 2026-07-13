@@ -51,10 +51,42 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: '7d' });
     delete user.password_hash;
-    res.json({ token, user });
+    res.json({ token, user, mustChangePassword: user.must_change_password });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Something went wrong logging in.' });
+  }
+});
+
+const { authRequired } = require('../middleware/auth');
+
+router.post('/change-password', authRequired, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'currentPassword and newPassword are required.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+    }
+
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    const valid = bcrypt.compareSync(currentPassword, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Current password is incorrect.' });
+
+    const newHash = bcrypt.hashSync(newPassword, 10);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2',
+      [newHash, req.user.id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong changing your password.' });
   }
 });
 

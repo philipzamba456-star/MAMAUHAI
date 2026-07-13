@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   :root{
     --admin-1:#4c3fc9; --admin-2:#3730a3;
@@ -296,6 +297,27 @@
 </div>
 
 <!-- ================= ADMIN APP ================= -->
+<!-- ================= FORCED PASSWORD CHANGE MODAL ================= -->
+<div id="force-password-modal" style="display:none;position:fixed;inset:0;background:rgba(10,10,14,.85);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px;width:380px;max-width:90vw;">
+    <div style="text-align:center;margin-bottom:18px;">
+      <div class="login-logo" style="margin-bottom:14px;"><i class="fa-solid fa-lock"></i></div>
+      <h3 style="font-size:1.1rem;">Set a New Password</h3>
+      <p style="font-size:.8rem;color:#888;margin-top:6px;">Your administrator reset your password. Please choose a new one to continue.</p>
+    </div>
+    <div id="force-password-error" style="display:none;background:#fdeaea;color:#8f1d21;border:1px solid #f5c2c4;border-radius:8px;padding:9px 12px;font-size:.78rem;margin-bottom:14px;"></div>
+    <div class="field">
+      <label>New password</label>
+      <div class="input-wrap" style="position:static;"><input id="force-new-password" type="password" style="padding-left:12px;" placeholder="At least 6 characters"></div>
+    </div>
+    <div class="field">
+      <label>Confirm new password</label>
+      <div class="input-wrap" style="position:static;"><input id="force-new-password-confirm" type="password" style="padding-left:12px;"></div>
+    </div>
+    <button onclick="submitForcePasswordChange()" class="signin-btn" style="width:100%;">Set New Password</button>
+  </div>
+</div>
+
 <div class="app" id="app-admin">
   <aside class="sidebar" style="background:linear-gradient(180deg,var(--admin-1),var(--admin-2));">
     <div class="sidebar-brand">
@@ -309,6 +331,7 @@
     <div class="nav-item" onclick="openUserMgmt()"><i class="fa-solid fa-user-gear"></i>User Mgmt</div>
     <div class="nav-item" onclick="openMessages()"><i class="fa-regular fa-envelope"></i>Messages</div>
     <div class="nav-item" onclick="openComplaints()"><i class="fa-regular fa-circle-question"></i>Complaints</div>
+    <div class="nav-item" onclick="openAnalytics()"><i class="fa-solid fa-chart-line"></i>Analytics</div>
     <div class="sidebar-spacer"></div>
     <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
   </aside>
@@ -619,7 +642,7 @@
 
 <!-- ================= HEALTH INSIGHTS MODAL ================= -->
 <div id="insights-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:16px;width:420px;max-width:94vw;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div style="background:#fff;border-radius:16px;width:560px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
     <div style="padding:18px 22px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
       <h3 style="font-size:1.05rem;color:var(--mother-teal-1);"><i class="fa-solid fa-wave-square"></i> Health Insights</h3>
       <i class="fa-solid fa-xmark" onclick="closeInsights()" style="cursor:pointer;color:#999;"></i>
@@ -633,6 +656,39 @@
       </div>
       <button onclick="saveDueDate()" style="width:100%;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;margin-bottom:18px;">Save Due Date</button>
       <div id="insights-content"></div>
+
+      <div id="insights-timeline" style="margin-top:18px;"></div>
+
+      <div style="margin-top:22px;border-top:1px solid #eee;padding-top:18px;">
+        <div class="panel-title" style="font-size:.92rem;color:var(--mother-teal-1);margin-bottom:12px;">Log Today's Check-In</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div><label style="font-size:.72rem;color:#666;">Weight (kg)</label><input id="log-weight" type="number" step="0.1" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;"></div>
+          <div><label style="font-size:.72rem;color:#666;">Baby movements (count)</label><input id="log-movements" type="number" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;"></div>
+          <div><label style="font-size:.72rem;color:#666;">BP Systolic</label><input id="log-bp-sys" type="number" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;"></div>
+          <div><label style="font-size:.72rem;color:#666;">BP Diastolic</label><input id="log-bp-dia" type="number" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;"></div>
+          <div><label style="font-size:.72rem;color:#666;">Water intake (ml)</label><input id="log-water" type="number" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;"></div>
+          <div><label style="font-size:.72rem;color:#666;">Mood</label>
+            <select id="log-mood" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;">
+              <option value="">Select...</option>
+              <option value="great">😄 Great</option>
+              <option value="good">🙂 Good</option>
+              <option value="okay">😐 Okay</option>
+              <option value="low">😔 Low</option>
+              <option value="anxious">😟 Anxious</option>
+            </select>
+          </div>
+        </div>
+        <label style="font-size:.72rem;color:#666;">Any symptoms today? (optional)</label>
+        <input id="log-symptoms" placeholder="e.g. mild headache, tiredness" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;margin-bottom:10px;">
+        <button onclick="submitHealthLog()" style="width:100%;padding:10px;border-radius:9px;background:var(--mother-teal-1);color:#fff;font-weight:600;">Save Check-In</button>
+        <div id="log-flag-note" style="display:none;margin-top:10px;padding:10px 12px;background:#fdeaea;border:1px solid #f5c2c4;border-radius:9px;font-size:.78rem;color:#8f1d21;"></div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <div class="panel-title" style="font-size:.9rem;color:var(--mother-teal-1);margin-bottom:10px;">Your Trends</div>
+        <canvas id="weight-chart" height="140"></canvas>
+        <canvas id="bp-chart" height="140" style="margin-top:16px;"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -661,6 +717,30 @@
       <button onclick="submitRide()" style="width:100%;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;margin-bottom:18px;">Request Ride</button>
       <div class="panel-title" style="font-size:.9rem;color:var(--mother-teal-1);">Your Ride Requests</div>
       <div id="rides-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADMIN: ANALYTICS ================= -->
+<div id="analytics-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:760px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:18px 22px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="font-size:1.05rem;color:var(--admin-2);"><i class="fa-solid fa-chart-line"></i> Analytics</h3>
+      <i class="fa-solid fa-xmark" onclick="closeAnalytics()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div style="padding:20px 22px;overflow-y:auto;flex:1;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+        <div><div class="panel-title" style="font-size:.85rem;">Users by Role</div><canvas id="chart-users-role" height="180"></canvas></div>
+        <div><div class="panel-title" style="font-size:.85rem;">Appointments by Status</div><canvas id="chart-appt-status" height="180"></canvas></div>
+      </div>
+      <div style="margin-bottom:24px;">
+        <div class="panel-title" style="font-size:.85rem;">Appointments Booked — Last 30 Days</div>
+        <canvas id="chart-appt-daily" height="90"></canvas>
+      </div>
+      <div>
+        <div class="panel-title" style="font-size:.85rem;">Mother Sign-Ups — Last 8 Weeks</div>
+        <canvas id="chart-mother-growth" height="90"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -779,11 +859,39 @@
       currentUser = data.user;
       localStorage.setItem('mu_token', token);
       localStorage.setItem('mu_user', JSON.stringify(currentUser));
-      enterApp();
+
+      if (data.mustChangePassword) {
+        tempPasswordForChange = password;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('force-password-modal').style.display = 'flex';
+      } else {
+        enterApp();
+      }
     } catch (err) {
       showLoginError(err.message);
     }
   });
+
+  let tempPasswordForChange = null;
+  async function submitForcePasswordChange(){
+    const p1 = document.getElementById('force-new-password').value;
+    const p2 = document.getElementById('force-new-password-confirm').value;
+    const errEl = document.getElementById('force-password-error');
+    errEl.style.display = 'none';
+    if (!p1 || p1.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+    if (p1 !== p2) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+    try {
+      await api('/api/auth/change-password', { method:'POST', body: JSON.stringify({ currentPassword: tempPasswordForChange, newPassword: p1 }) });
+      document.getElementById('force-password-modal').style.display = 'none';
+      document.getElementById('force-new-password').value = '';
+      document.getElementById('force-new-password-confirm').value = '';
+      tempPasswordForChange = null;
+      enterApp();
+    } catch(err){
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  }
 
   function connectSocket(){
     if (socket) socket.disconnect();
@@ -1096,6 +1204,7 @@
           </td>
           <td style="padding:8px;white-space:nowrap;">
             <button onclick="saveUserRow(${u.id})" style="padding:6px 10px;border-radius:6px;background:#4c3fc9;color:#fff;font-size:.72rem;font-weight:600;margin-right:4px;">Save</button>
+            <button onclick="resetUserPassword(${u.id}, '${escapeHtml(u.name).replace(/'/g, "\\'")}')" style="padding:6px 10px;border-radius:6px;background:#fdf6e3;color:#c9962c;font-size:.72rem;font-weight:600;margin-right:4px;">Reset Password</button>
             <button onclick="deleteUserRow(${u.id})" style="padding:6px 10px;border-radius:6px;background:#fdeaea;color:#c0272d;font-size:.72rem;font-weight:600;">Delete</button>
           </td>
         </tr>`).join('') : `<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No users found.</td></tr>`;
@@ -1119,6 +1228,14 @@
       await api('/api/users/' + id, { method:'DELETE' });
       loadUserMgmt();
       refreshDashboard();
+    } catch(err){ alert(err.message); }
+  }
+
+  async function resetUserPassword(id, name){
+    if (!confirm(`Reset the password for ${name}? They'll be given a temporary password and required to set a new one at next login.`)) return;
+    try {
+      const data = await api('/api/users/' + id + '/reset-password', { method:'POST' });
+      alert(`Temporary password for ${name}:\n\n${data.tempPassword}\n\n${data.message}`);
     } catch(err){ alert(err.message); }
   }
 
@@ -1303,9 +1420,74 @@
       const me = await api('/api/users/me');
       renderInsights(me.due_date);
     } catch(err){}
+    loadHealthTrends();
   }
   function closeInsights(){
     document.getElementById('insights-modal').style.display = 'none';
+  }
+
+  const ANTENATAL_SCHEDULE = [
+    { week: 12, label: 'First antenatal visit — early check, dating scan if available' },
+    { week: 20, label: 'Anomaly scan, general wellbeing check' },
+    { week: 26, label: 'Growth check, blood pressure & urine screening' },
+    { week: 30, label: 'Growth check, discuss birth plan' },
+    { week: 34, label: 'Position check, continued monitoring' },
+    { week: 36, label: 'Weekly checks begin — baby position, readiness for birth' },
+    { week: 38, label: 'Weekly check' },
+    { week: 40, label: 'Due date check — discuss next steps if baby hasn\u2019t arrived' },
+  ];
+  const VACCINATION_SCHEDULE = [
+    { label: 'Tetanus-Diphtheria (Td) — 1st dose', when: 'At first antenatal contact' },
+    { label: 'Tetanus-Diphtheria (Td) — 2nd dose', when: '4 weeks after 1st dose' },
+    { label: 'Flu vaccine (if available/recommended locally)', when: 'Any trimester, as advised by your provider' },
+  ];
+  const BIRTH_CHECKLIST = [
+    'National ID / antenatal card',
+    'Change of clothes for you and baby',
+    'Sanitary pads',
+    'Baby blanket and clothes',
+    'Any medication you currently take',
+    'Phone charger and small cash',
+    'Route to your chosen hospital planned',
+    'Emergency contact person informed',
+  ];
+
+  function renderTimeline(currentWeek){
+    const box = document.getElementById('insights-timeline');
+    const checklistState = JSON.parse(localStorage.getItem('mu_birth_checklist') || '{}');
+    box.innerHTML = `
+      <div class="panel-title" style="font-size:.9rem;color:var(--mother-teal-1);margin-bottom:8px;">Antenatal Visit Schedule</div>
+      <div class="panel-box" style="margin-bottom:16px;">
+        ${ANTENATAL_SCHEDULE.map(v => `
+          <div class="list-row" style="padding:9px 10px;">
+            <div class="li-icon" style="width:34px;height:34px;background:${currentWeek >= v.week ? '#e6f7ed' : '#f0f1f5'};color:${currentWeek >= v.week ? '#1c9a53' : '#999'};"><i class="fa-solid ${currentWeek >= v.week ? 'fa-check' : 'fa-calendar'}"></i></div>
+            <div class="li-text"><div class="t" style="font-size:.8rem;">Week ${v.week}</div><div class="d" style="font-size:.72rem;">${escapeHtml(v.label)}</div></div>
+          </div>`).join('')}
+      </div>
+      <div class="panel-title" style="font-size:.9rem;color:var(--mother-teal-1);margin-bottom:8px;">Vaccination Schedule</div>
+      <div class="panel-box" style="margin-bottom:16px;">
+        ${VACCINATION_SCHEDULE.map(v => `
+          <div class="list-row" style="padding:9px 10px;">
+            <div class="li-icon" style="width:34px;height:34px;background:#e9f0fe;color:#2e5df0;"><i class="fa-solid fa-syringe"></i></div>
+            <div class="li-text"><div class="t" style="font-size:.8rem;">${escapeHtml(v.label)}</div><div class="d" style="font-size:.72rem;">${escapeHtml(v.when)}</div></div>
+          </div>`).join('')}
+      </div>
+      <div class="panel-title" style="font-size:.9rem;color:var(--mother-teal-1);margin-bottom:8px;">Birth Preparation Checklist</div>
+      <div class="panel-box">
+        ${BIRTH_CHECKLIST.map((item, i) => `
+          <label class="list-row" style="padding:9px 10px;cursor:pointer;">
+            <input type="checkbox" ${checklistState[i] ? 'checked' : ''} onchange="toggleChecklistItem(${i}, this.checked)" style="margin-right:10px;width:16px;height:16px;">
+            <span style="font-size:.8rem;text-decoration:${checklistState[i] ? 'line-through' : 'none'};color:${checklistState[i] ? '#999' : '#333'};">${escapeHtml(item)}</span>
+          </label>`).join('')}
+      </div>`;
+  }
+  function toggleChecklistItem(index, checked){
+    const state = JSON.parse(localStorage.getItem('mu_birth_checklist') || '{}');
+    state[index] = checked;
+    localStorage.setItem('mu_birth_checklist', JSON.stringify(state));
+    const label = event.target.nextElementSibling;
+    label.style.textDecoration = checked ? 'line-through' : 'none';
+    label.style.color = checked ? '#999' : '#333';
   }
 
   function renderInsights(dueDateStr){
@@ -1313,6 +1495,7 @@
     if (!dueDateStr) {
       document.getElementById('insights-due-date').value = '';
       content.innerHTML = `<div class="empty-state"><i class="fa-solid fa-wave-square"></i><span>Add your due date above to see personalized weekly insights.</span></div>`;
+      document.getElementById('insights-timeline').innerHTML = '';
       return;
     }
     document.getElementById('insights-due-date').value = dueDateStr.slice(0, 10);
@@ -1330,6 +1513,7 @@
         <i class="fa-solid fa-baby"></i>
         <div><div class="tt">This week</div><div class="td">${closestWeekFact(currentWeek)}</div></div>
       </div>`;
+    renderTimeline(currentWeek);
   }
 
   async function saveDueDate(){
@@ -1338,6 +1522,78 @@
       const updated = await api('/api/users/me', { method:'PATCH', body: JSON.stringify({ due_date }) });
       renderInsights(updated.due_date);
     } catch(err){ alert(err.message); }
+  }
+
+  // ============== HEALTH TRACKING (weight, BP, mood, symptoms, movement, water) ==============
+  let weightChartInstance = null;
+  let bpChartInstance = null;
+
+  async function submitHealthLog(){
+    const payload = {
+      weight_kg: document.getElementById('log-weight').value || null,
+      bp_systolic: document.getElementById('log-bp-sys').value || null,
+      bp_diastolic: document.getElementById('log-bp-dia').value || null,
+      baby_movements: document.getElementById('log-movements').value || null,
+      water_intake_ml: document.getElementById('log-water').value || null,
+      mood: document.getElementById('log-mood').value || null,
+      symptoms: document.getElementById('log-symptoms').value || null,
+    };
+
+    // Gentle, non-diagnostic threshold check — encourages contacting a provider, never diagnoses.
+    const sys = Number(payload.bp_systolic);
+    const dia = Number(payload.bp_diastolic);
+    const movements = payload.baby_movements !== null ? Number(payload.baby_movements) : null;
+    const flagNote = document.getElementById('log-flag-note');
+    let flagged = null;
+    if ((sys && sys >= 140) || (dia && dia >= 90)) {
+      flagged = 'Your blood pressure reading is higher than typical. It would be a good idea to reach out to your doctor or health worker about this.';
+    } else if (movements !== null && movements === 0) {
+      flagged = 'You logged no baby movements today. If you expected to feel movement and haven\u2019t, please contact your doctor or health worker soon.';
+    }
+
+    try {
+      await api('/api/health-logs', { method:'POST', body: JSON.stringify(payload) });
+      ['log-weight','log-bp-sys','log-bp-dia','log-movements','log-water','log-symptoms'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('log-mood').value = '';
+      loadHealthTrends();
+
+      if (flagged) {
+        flagNote.style.display = 'block';
+        flagNote.innerHTML = `${escapeHtml(flagged)} <a onclick="escalateToCareTeam()" style="color:#8f1d21;font-weight:700;cursor:pointer;text-decoration:underline;">Message your care team now</a>`;
+      } else {
+        flagNote.style.display = 'none';
+      }
+    } catch(err){ alert(err.message); }
+  }
+
+  async function loadHealthTrends(){
+    try {
+      const logs = await api('/api/health-logs');
+      const sorted = [...logs].reverse(); // oldest first for charting
+      const labels = sorted.map(l => new Date(l.logged_at).toLocaleDateString(undefined, { month:'short', day:'numeric' }));
+
+      const weightCtx = document.getElementById('weight-chart');
+      const weights = sorted.map(l => l.weight_kg !== null ? Number(l.weight_kg) : null);
+      if (weightChartInstance) weightChartInstance.destroy();
+      weightChartInstance = new Chart(weightCtx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Weight (kg)', data: weights, borderColor: '#c0272d', backgroundColor: '#c0272d22', tension: 0.3, spanGaps: true }] },
+        options: { plugins: { legend: { display: true, labels: { font: { size: 10 } } } }, scales: { y: { ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 9 } } } } }
+      });
+
+      const bpCtx = document.getElementById('bp-chart');
+      const systolic = sorted.map(l => l.bp_systolic);
+      const diastolic = sorted.map(l => l.bp_diastolic);
+      if (bpChartInstance) bpChartInstance.destroy();
+      bpChartInstance = new Chart(bpCtx, {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'Systolic', data: systolic, borderColor: '#2e5df0', backgroundColor: '#2e5df022', tension: 0.3, spanGaps: true },
+          { label: 'Diastolic', data: diastolic, borderColor: '#1c9a53', backgroundColor: '#1c9a5322', tension: 0.3, spanGaps: true },
+        ]},
+        options: { plugins: { legend: { display: true, labels: { font: { size: 10 } } } }, scales: { y: { ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 9 } } } } }
+      });
+    } catch(err){}
   }
 
   // ============== DIGITAL PASSPORT ==============
@@ -1503,6 +1759,64 @@
     const status = document.getElementById('complaint-status-' + id).value;
     try { await api(`/api/complaints/${id}/status`, { method:'PATCH', body: JSON.stringify({ status }) }); refreshDashboard(); }
     catch(err){ alert(err.message); }
+  }
+
+  // ============== ADMIN: ANALYTICS ==============
+  let chartUsersRole = null, chartApptStatus = null, chartApptDaily = null, chartMotherGrowth = null;
+  const CHART_COLORS = ['#c0272d', '#2e5df0', '#1c9a53', '#e07a1f', '#8b3fc9', '#4c3fc9'];
+
+  async function openAnalytics(){
+    document.getElementById('analytics-modal').style.display = 'flex';
+    try {
+      const data = await api('/api/stats/analytics');
+
+      const rolesCtx = document.getElementById('chart-users-role');
+      if (chartUsersRole) chartUsersRole.destroy();
+      chartUsersRole = new Chart(rolesCtx, {
+        type: 'doughnut',
+        data: {
+          labels: data.users_by_role.map(r => r.role),
+          datasets: [{ data: data.users_by_role.map(r => r.count), backgroundColor: CHART_COLORS }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+      });
+
+      const statusCtx = document.getElementById('chart-appt-status');
+      if (chartApptStatus) chartApptStatus.destroy();
+      chartApptStatus = new Chart(statusCtx, {
+        type: 'bar',
+        data: {
+          labels: data.appointments_by_status.map(s => s.status),
+          datasets: [{ label: 'Appointments', data: data.appointments_by_status.map(s => s.count), backgroundColor: '#4c3fc9' }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, stepSize: 1 } }, x: { ticks: { font: { size: 9 } } } } }
+      });
+
+      const dailyCtx = document.getElementById('chart-appt-daily');
+      if (chartApptDaily) chartApptDaily.destroy();
+      chartApptDaily = new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+          labels: data.appointments_by_day.map(d => new Date(d.day).toLocaleDateString(undefined, { month:'short', day:'numeric' })),
+          datasets: [{ label: 'Appointments', data: data.appointments_by_day.map(d => d.count), borderColor: '#c0272d', backgroundColor: '#c0272d22', tension: 0.3, fill: true }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, stepSize: 1 } }, x: { ticks: { font: { size: 8 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } } } }
+      });
+
+      const growthCtx = document.getElementById('chart-mother-growth');
+      if (chartMotherGrowth) chartMotherGrowth.destroy();
+      chartMotherGrowth = new Chart(growthCtx, {
+        type: 'bar',
+        data: {
+          labels: data.mother_growth_by_week.map(w => new Date(w.week).toLocaleDateString(undefined, { month:'short', day:'numeric' })),
+          datasets: [{ label: 'New Mothers', data: data.mother_growth_by_week.map(w => w.count), backgroundColor: '#1c9a53' }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 10 }, stepSize: 1 } }, x: { ticks: { font: { size: 9 } } } } }
+      });
+    } catch(err){}
+  }
+  function closeAnalytics(){
+    document.getElementById('analytics-modal').style.display = 'none';
   }
 
   // ============== DOCTOR: MY PATIENTS ==============

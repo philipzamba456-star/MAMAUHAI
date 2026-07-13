@@ -1,4 +1,6 @@
 const express = require('express');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { pool } = require('../db/database');
 const { authRequired, requireRole } = require('../middleware/auth');
 
@@ -56,6 +58,27 @@ router.patch('/:id', authRequired, requireRole('admin'), async (req, res) => {
 router.delete('/:id', authRequired, requireRole('admin'), async (req, res) => {
   await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
   res.json({ success: true });
+});
+
+// Admin generates a temporary password for a user and forces them to change it
+// at next login. The admin never sees or sets the user's real password directly.
+router.post('/:id/reset-password', authRequired, requireRole('admin'), async (req, res) => {
+  const existing = await pool.query('SELECT id, name, email FROM users WHERE id = $1', [req.params.id]);
+  if (!existing.rows.length) return res.status(404).json({ error: 'User not found.' });
+
+  // Generate a readable temporary password, e.g. "swift-forest-4821"
+  const words = ['swift', 'gentle', 'bright', 'quiet', 'brave', 'calm', 'sunny', 'golden'];
+  const nouns = ['forest', 'river', 'meadow', 'harbor', 'valley', 'summit', 'garden', 'shore'];
+  const tempPassword = `${words[crypto.randomInt(words.length)]}-${nouns[crypto.randomInt(nouns.length)]}-${crypto.randomInt(1000, 9999)}`;
+
+  const hash = bcrypt.hashSync(tempPassword, 10);
+  await pool.query('UPDATE users SET password_hash = $1, must_change_password = true WHERE id = $2', [hash, req.params.id]);
+
+  res.json({
+    success: true,
+    tempPassword,
+    message: `Share this temporary password with ${existing.rows[0].name} directly (e.g. in person or by phone). They will be required to set a new password the next time they log in. This password will not be shown again.`,
+  });
 });
 
 module.exports = router;

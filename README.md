@@ -68,6 +68,10 @@ You can also register new accounts via `POST /api/auth/register`.
 - **Health Insights** — a mother sets her due date, and the app computes her current pregnancy week and shows a relevant fact about her baby's development that week.
 - **Digital Passport** — a mother's own profile plus her full visit history in one place, pulled live from the database.
 - **Transport** — mothers can request a ride (pickup/destination), see their ride history, and admins are notified of new requests live; ride counts show up in the admin dashboard.
+- **Personalized pregnancy timeline** — beyond the weekly baby-development fact, mothers now see a real antenatal visit schedule (checked off automatically as weeks pass), a vaccination schedule, and an interactive birth-preparation checklist that persists across visits.
+- **Maternal health tracking** — mothers can log weight, blood pressure, mood, symptoms, baby movements, and water intake, with real trend charts (Chart.js) for weight and blood pressure over time. If a reading looks like it's worth a professional look (e.g. elevated blood pressure, zero movements logged when movement is expected), the app shows a gentle note with a one-tap link to message the care team — it never diagnoses, just flags and connects.
+- **Admin password reset** — admins can generate a temporary password for any user (shown once, never stored in plain text) and force them to set a new password at their next login. Admins cannot view anyone's actual password at any point.
+- **Analytics dashboard** — a real charts view for admins: user breakdown by role (donut), appointments by status (bar), appointments booked over the last 30 days (line), and mother sign-ups over the last 8 weeks (bar) — all pulled live from the database, not mocked.
 - **Hospitals / Services / Education Center / Costs** — informational directories and content, written for a Ugandan context (real hospital names, realistic cost estimates in UGX, practical pregnancy/newborn guidance).
 - **Accessibility: Large Text** — a genuine site-wide font-size toggle for the mother dashboard, persisted across visits.
 - **Notifications** — a live bell icon shows unread counts and a dropdown list, updated over Socket.io as things happen across appointments, rides, and messages.
@@ -115,6 +119,10 @@ All endpoints are under `/api`. Authenticated routes require `Authorization: Bea
 | PATCH  | /api/users/:id                     | admin         | Update role/status/name           |
 | DELETE | /api/users/:id                     | admin         | Delete a user                     |
 | PATCH  | /api/users/me                      | any logged-in | Update your own profile (e.g. due_date) |
+| POST   | /api/users/:id/reset-password        | admin         | Generate a temp password, force change at next login |
+| POST   | /api/auth/change-password           | any logged-in | Change your own password           |
+| GET    | /api/health-logs                   | mother        | Your health check-in history       |
+| POST   | /api/health-logs                   | mother        | Log a new health check-in          |
 | GET    | /api/appointments                  | any logged-in | List your scoped appointments     |
 | POST   | /api/appointments                  | mother        | Book an appointment               |
 | PATCH  | /api/appointments/:id/assign        | admin         | Assign a provider                 |
@@ -134,6 +142,7 @@ All endpoints are under `/api`. Authenticated routes require `Authorization: Bea
 | GET    | /api/stats/admin                   | admin         | Dashboard stat cards               |
 | GET    | /api/stats/doctor                  | doctor/health | Dashboard stat cards               |
 | GET    | /api/stats/mother                  | mother        | Dashboard stat cards               |
+| GET    | /api/stats/analytics               | admin         | Chart data: users, appointments, growth |
 
 ## Docker (fallback if a local Postgres install is giving you trouble)
 
