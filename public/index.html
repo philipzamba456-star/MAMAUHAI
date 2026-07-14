@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="/vendor/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   :root{
@@ -32,8 +33,8 @@
     min-height:100vh; display:flex; align-items:center; justify-content:center;
     position:relative; overflow:hidden;
     background:
-      linear-gradient(rgba(10,10,14,.72), rgba(10,10,14,.8)),
-      radial-gradient(ellipse at 30% 20%, #2a1414 0%, #0a0a0d 60%);
+      linear-gradient(rgba(10,10,14,.68), rgba(10,10,14,.8)),
+      url('/images/mother-baby.png') center/cover no-repeat;
   }
   #login-screen::before{
     content:""; position:absolute; inset:0;
@@ -290,8 +291,43 @@
 
         <div id="login-error" style="display:none;background:#fdeaea;color:#8f1d21;border:1px solid #f5c2c4;border-radius:8px;padding:9px 12px;font-size:.78rem;margin-bottom:14px;"></div>
         <button class="signin-btn" id="signin-btn">Sign In</button>
+        <div style="text-align:center;margin-top:14px;">
+          <a href="#" onclick="openQRLogin();return false;" style="font-size:.8rem;color:#c0272d;font-weight:600;"><i class="fa-solid fa-qrcode"></i>&nbsp; Sign in with QR code</a>
+        </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ================= QR LOGIN MODAL ================= -->
+<div id="qr-login-modal" style="display:none;position:fixed;inset:0;background:rgba(10,10,14,.85);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px;width:360px;max-width:90vw;text-align:center;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <h3 style="font-size:1.05rem;color:#8f1d21;">Sign in with QR code</h3>
+      <i class="fa-solid fa-xmark" onclick="closeQRLogin()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <p style="font-size:.78rem;color:#777;margin-bottom:16px;">Open Mama Uhai on a device where you're already signed in, choose <strong>Log In Another Device</strong> in the sidebar, and scan this code.</p>
+    <div id="qr-login-code" style="display:flex;align-items:center;justify-content:center;min-height:240px;background:#faf7f2;border-radius:12px;padding:12px;margin-bottom:14px;">
+      <span style="color:#999;font-size:.8rem;">Generating code...</span>
+    </div>
+    <div id="qr-login-status" style="font-size:.8rem;color:#8f1d21;font-weight:600;margin-bottom:6px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Waiting for you to scan...</div>
+    <a href="#" onclick="closeQRLogin();return false;" style="font-size:.78rem;color:#777;">Use email &amp; password instead</a>
+  </div>
+</div>
+
+<!-- ================= QR SCANNER MODAL (approve a login on another device) ================= -->
+<div id="qr-scan-modal" style="display:none;position:fixed;inset:0;background:rgba(10,10,14,.9);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:380px;max-width:92vw;text-align:center;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <h3 style="font-size:1.05rem;color:#333;">Log In Another Device</h3>
+      <i class="fa-solid fa-xmark" onclick="closeQRScan()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <p style="font-size:.78rem;color:#777;margin-bottom:12px;">Point your camera at the QR code shown on the other device's sign-in screen.</p>
+    <div style="position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:1/1;">
+      <video id="qr-scan-video" style="width:100%;height:100%;object-fit:cover;" playsinline muted></video>
+    </div>
+    <canvas id="qr-scan-canvas" style="display:none;"></canvas>
+    <div id="qr-scan-status" style="font-size:.8rem;color:#666;margin-top:12px;">Starting camera...</div>
   </div>
 </div>
 
@@ -350,11 +386,12 @@
     <div class="nav-item" onclick="openMessages()"><i class="fa-regular fa-envelope"></i>Messages</div>
     <div class="nav-item" onclick="openComplaints()"><i class="fa-regular fa-circle-question"></i>Complaints</div>
     <div class="nav-item" onclick="openAnalytics()"><i class="fa-solid fa-chart-line"></i>Analytics</div>
+    <div class="nav-item" onclick="openQRScan()"><i class="fa-solid fa-qrcode"></i>Log In Another Device</div>
     <div class="sidebar-spacer"></div>
     <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
   </aside>
   <main class="main">
-    <div class="hero" style="background:linear-gradient(120deg,var(--admin-1),var(--admin-2));">
+    <div class="hero" style="background:linear-gradient(120deg,rgba(76,63,201,.88),rgba(55,48,163,.88)),url('/images/mother-baby.png') center 30%/cover;">
       <h1>Welcome, Administrator 👋</h1>
       <p>Platform control center — manage providers, allocations, and monitor activity across the mothers' portal.</p>
     </div>
@@ -417,11 +454,12 @@
     <div class="nav-item" onclick="openMyPatients()"><i class="fa-solid fa-user-group"></i>My Patients</div>
     <div class="nav-item"><i class="fa-regular fa-calendar"></i>Appointments</div>
     <div class="nav-item" onclick="openMessages()"><i class="fa-regular fa-comment-dots"></i>Messages</div>
+    <div class="nav-item" onclick="openQRScan()"><i class="fa-solid fa-qrcode"></i>Log In Another Device</div>
     <div class="sidebar-spacer"></div>
     <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
   </aside>
   <main class="main">
-    <div class="hero" style="background:linear-gradient(120deg,var(--doctor-1),var(--doctor-2));">
+    <div class="hero" style="background:linear-gradient(120deg,rgba(46,93,240,.88),rgba(30,63,184,.88)),url('/images/mother-baby.png') center 30%/cover;">
       <h1 id="doctor-name-hero">Welcome, Doctor 👋</h1>
       <p id="doctor-hero-sub">You have 0 pending approvals and 0 unread messages.</p>
     </div>
@@ -469,6 +507,7 @@
     <div class="nav-item" onclick="openEducation()"><i class="fa-solid fa-book-open"></i>Education Center</div>
     <div class="nav-item" onclick="openRides()"><i class="fa-solid fa-car"></i>Transport</div>
     <div class="nav-item" onclick="toggleLargeText()"><i class="fa-solid fa-text-height"></i>Large Text</div>
+    <div class="nav-item" onclick="openQRScan()"><i class="fa-solid fa-qrcode"></i>Log In Another Device</div>
     <div class="sidebar-spacer"></div>
     <div class="signout" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</div>
   </aside>
@@ -485,7 +524,7 @@
       <span class="who" id="mother-name-top">marthamulwanyi</span>
     </div>
 
-    <div class="hero" style="background:linear-gradient(120deg,var(--mother-red-1),var(--mother-red-2));">
+    <div class="hero" style="background:linear-gradient(120deg,rgba(192,39,45,.86),rgba(143,29,33,.86)),url('/images/mother-baby.png') center 30%/cover;">
       <p style="opacity:.9;font-size:.85rem;">Good afternoon,</p>
       <h1 id="mother-name-hero">marthamulwanyi 🌸</h1>
       <p id="mother-hero-sub">No upcoming appointments. Book one today!</p>
@@ -925,22 +964,130 @@
 
     try {
       const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-      token = data.token;
-      currentUser = data.user;
-      localStorage.setItem('mu_token', token);
-      localStorage.setItem('mu_user', JSON.stringify(currentUser));
-
-      if (data.mustChangePassword) {
-        tempPasswordForChange = password;
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('force-password-modal').style.display = 'flex';
-      } else {
-        enterApp();
-      }
+      completeLogin(data, password);
     } catch (err) {
       showLoginError(err.message);
     }
   });
+
+  function completeLogin(data, plainPassword){
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('mu_token', token);
+    localStorage.setItem('mu_user', JSON.stringify(currentUser));
+
+    if (data.mustChangePassword) {
+      tempPasswordForChange = plainPassword || null;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('qr-login-modal').style.display = 'none';
+      if (plainPassword) {
+        document.getElementById('force-password-modal').style.display = 'flex';
+      } else {
+        // Signed in via QR — we don't have their password to complete the
+        // forced-change flow, so ask them to do it the regular way once.
+        alert('Your account needs a password change before continuing. Please sign in once with your email and temporary password to set a new one.');
+        document.getElementById('login-screen').style.display = 'flex';
+      }
+    } else {
+      enterApp();
+    }
+  }
+
+  // ============== QR LOGIN (the not-yet-signed-in device) ==============
+  let qrPollTimer = null;
+  async function openQRLogin(){
+    document.getElementById('qr-login-modal').style.display = 'flex';
+    document.getElementById('qr-login-status').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Waiting for you to scan...';
+    const box = document.getElementById('qr-login-code');
+    box.innerHTML = '<span style="color:#999;font-size:.8rem;">Generating code...</span>';
+    try {
+      const data = await fetch(API + '/api/auth/qr/start', { method: 'POST' }).then(r => r.json());
+      box.innerHTML = data.qrSvg;
+      const svg = box.querySelector('svg');
+      if (svg) { svg.style.width = '220px'; svg.style.height = '220px'; }
+      startQRPolling(data.token, data.expiresIn);
+    } catch(err){
+      box.innerHTML = '<span style="color:#c0272d;font-size:.8rem;">Could not generate a code. Please try again.</span>';
+    }
+  }
+  function closeQRLogin(){
+    document.getElementById('qr-login-modal').style.display = 'none';
+    if (qrPollTimer) { clearInterval(qrPollTimer); qrPollTimer = null; }
+  }
+  function startQRPolling(qrToken, expiresIn){
+    if (qrPollTimer) clearInterval(qrPollTimer);
+    const deadline = Date.now() + (expiresIn * 1000);
+    qrPollTimer = setInterval(async () => {
+      if (Date.now() > deadline) {
+        clearInterval(qrPollTimer); qrPollTimer = null;
+        document.getElementById('qr-login-status').innerHTML = '<span style="color:#c0272d;">Code expired. <a href="#" onclick="openQRLogin();return false;" style="color:#c0272d;text-decoration:underline;">Get a new one</a></span>';
+        return;
+      }
+      try {
+        const res = await fetch(API + '/api/auth/qr/status/' + qrToken);
+        const data = await res.json();
+        if (data.status === 'approved') {
+          clearInterval(qrPollTimer); qrPollTimer = null;
+          document.getElementById('qr-login-status').innerHTML = '<span style="color:#1c9a53;"><i class="fa-solid fa-circle-check"></i> Signed in — redirecting...</span>';
+          setTimeout(() => { completeLogin(data); closeQRLogin(); }, 500);
+        } else if (data.status === 'expired') {
+          clearInterval(qrPollTimer); qrPollTimer = null;
+          document.getElementById('qr-login-status').innerHTML = '<span style="color:#c0272d;">Code expired. <a href="#" onclick="openQRLogin();return false;" style="color:#c0272d;text-decoration:underline;">Get a new one</a></span>';
+        }
+      } catch(err){ /* transient network hiccup — just try again next tick */ }
+    }, 2000);
+  }
+
+  // ============== QR SCAN (an already-signed-in device approving another) ==============
+  let qrScanStream = null;
+  let qrScanRAF = null;
+  async function openQRScan(){
+    document.getElementById('qr-scan-modal').style.display = 'flex';
+    document.getElementById('qr-scan-status').textContent = 'Starting camera...';
+    try {
+      qrScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const video = document.getElementById('qr-scan-video');
+      video.srcObject = qrScanStream;
+      await video.play();
+      document.getElementById('qr-scan-status').textContent = 'Point your camera at the QR code.';
+      scanQRFrame();
+    } catch(err){
+      document.getElementById('qr-scan-status').innerHTML = '<span style="color:#c0272d;">Could not access the camera. Check your browser\'s camera permission for this site.</span>';
+    }
+  }
+  function closeQRScan(){
+    document.getElementById('qr-scan-modal').style.display = 'none';
+    if (qrScanRAF) { cancelAnimationFrame(qrScanRAF); qrScanRAF = null; }
+    if (qrScanStream) { qrScanStream.getTracks().forEach(t => t.stop()); qrScanStream = null; }
+  }
+  function scanQRFrame(){
+    const video = document.getElementById('qr-scan-video');
+    const canvas = document.getElementById('qr-scan-canvas');
+    if (!video.videoWidth) { qrScanRAF = requestAnimationFrame(scanQRFrame); return; }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = (typeof jsQR === 'function') ? jsQR(imageData.data, imageData.width, imageData.height) : null;
+    if (code && code.data && code.data.startsWith('mamauhai-login:')) {
+      approveQRScan(code.data);
+      return;
+    }
+    qrScanRAF = requestAnimationFrame(scanQRFrame);
+  }
+  async function approveQRScan(qrData){
+    document.getElementById('qr-scan-status').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Confirming...';
+    try {
+      await api('/api/auth/qr/approve', { method: 'POST', body: JSON.stringify({ token: qrData }) });
+      document.getElementById('qr-scan-status').innerHTML = '<span style="color:#1c9a53;"><i class="fa-solid fa-circle-check"></i> That device is now signed in.</span>';
+      if (qrScanStream) { qrScanStream.getTracks().forEach(t => t.stop()); qrScanStream = null; }
+      setTimeout(closeQRScan, 1800);
+    } catch(err){
+      document.getElementById('qr-scan-status').innerHTML = '<span style="color:#c0272d;">' + escapeHtml(err.message) + '</span>';
+      setTimeout(() => { qrScanRAF = requestAnimationFrame(scanQRFrame); }, 1500);
+    }
+  }
 
   function openForgotPassword(){
     document.getElementById('forgot-password-error').style.display = 'none';

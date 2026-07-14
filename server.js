@@ -50,6 +50,7 @@ app.use('/api/health-logs', require('./routes/health-logs'));
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/auth/qr', require('./routes/qr-auth')());
 app.use('/api/payments', require('./routes/payments')(io));
 app.use('/api/reviews', require('./routes/reviews')(io));
 app.use('/api/medical-records', require('./routes/medical-records')(io));

@@ -165,6 +165,17 @@ async function init() {
       resolved_at TIMESTAMPTZ,
       resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL
     );
+
+    -- QR-code login: a browser that isn't signed in creates a pending
+    -- session; a user who's already signed in on another device scans the
+    -- code and approves it, which signs the waiting browser in as them.
+    CREATE TABLE IF NOT EXISTS qr_login_sessions (
+      token TEXT PRIMARY KEY,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','used','expired')),
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      expires_at TIMESTAMPTZ NOT NULL
+    );
   `);
 
   // Migrations for databases created before these columns existed
