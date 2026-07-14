@@ -285,14 +285,32 @@
 
         <div class="login-row">
           <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox"> Remember me</label>
-          <a href="#">Forgot password?</a>
+          <a href="#" onclick="openForgotPassword();return false;">Forgot password?</a>
         </div>
 
         <div id="login-error" style="display:none;background:#fdeaea;color:#8f1d21;border:1px solid #f5c2c4;border-radius:8px;padding:9px 12px;font-size:.78rem;margin-bottom:14px;"></div>
         <button class="signin-btn" id="signin-btn">Sign In</button>
-        <p style="text-align:center;font-size:.72rem;color:#999;margin-top:14px;">Demo logins: mother@mamauhai.app / mother123 · doctor@mamauhai.app / doctor123 · admin@mamauhai.app / admin123 (password: matching role123)</p>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ================= FORGOT PASSWORD MODAL ================= -->
+<div id="forgot-password-modal" style="display:none;position:fixed;inset:0;background:rgba(10,10,14,.85);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px;width:380px;max-width:90vw;">
+    <div style="text-align:center;margin-bottom:18px;">
+      <div class="login-logo" style="margin-bottom:14px;"><i class="fa-solid fa-key"></i></div>
+      <h3 style="font-size:1.1rem;">Reset Your Password</h3>
+      <p style="font-size:.8rem;color:#888;margin-top:6px;">Enter your account email. An administrator will review your request and issue you a temporary password.</p>
+    </div>
+    <div id="forgot-password-error" style="display:none;background:#fdeaea;color:#8f1d21;border:1px solid #f5c2c4;border-radius:8px;padding:9px 12px;font-size:.78rem;margin-bottom:14px;"></div>
+    <div id="forgot-password-success" style="display:none;background:#e6f7ed;color:#1c9a53;border:1px solid #b9e8c9;border-radius:8px;padding:9px 12px;font-size:.78rem;margin-bottom:14px;"></div>
+    <div class="field">
+      <label>Email Address</label>
+      <div class="input-wrap" style="position:static;"><input id="forgot-password-email" type="email" style="padding-left:12px;" placeholder="you@example.com"></div>
+    </div>
+    <button onclick="submitForgotPassword()" class="signin-btn" style="width:100%;margin-bottom:10px;">Send Request</button>
+    <button onclick="closeForgotPassword()" style="width:100%;padding:10px;border-radius:9px;background:#f0f1f5;color:#333;font-weight:600;">Cancel</button>
   </div>
 </div>
 
@@ -570,30 +588,79 @@
       <i class="fa-solid fa-xmark" onclick="closeUserMgmt()" style="cursor:pointer;color:#999;"></i>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <input id="usermgmt-search" placeholder="Search name or email..." style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;" onkeydown="if(event.key==='Enter') loadUserMgmt();">
-      <select id="usermgmt-role-filter" style="padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;" onchange="loadUserMgmt()">
-        <option value="">All roles</option>
+      <button onclick="showUserMgmtTab('list')" id="umtab-list" class="umtab active" style="padding:8px 14px;border-radius:8px;font-size:.78rem;font-weight:600;background:#4c3fc9;color:#fff;">All Users</button>
+      <button onclick="showUserMgmtTab('requests')" id="umtab-requests" class="umtab" style="padding:8px 14px;border-radius:8px;font-size:.78rem;font-weight:600;background:#f0f1f5;color:#444;">Password Requests <span id="pwreq-badge" style="display:none;background:#c0272d;color:#fff;border-radius:10px;padding:1px 7px;font-size:.68rem;margin-left:3px;"></span></button>
+      <button onclick="showUserMgmtTab('demo')" id="umtab-demo" class="umtab" style="padding:8px 14px;border-radius:8px;font-size:.78rem;font-weight:600;background:#f0f1f5;color:#444;">Demo Accounts</button>
+      <button onclick="openCreateUser()" style="margin-left:auto;padding:8px 14px;border-radius:8px;font-size:.78rem;font-weight:600;background:#1c9a53;color:#fff;"><i class="fa-solid fa-plus"></i> New User</button>
+    </div>
+
+    <div id="umtab-panel-list">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="usermgmt-search" placeholder="Search name or email..." style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;" onkeydown="if(event.key==='Enter') loadUserMgmt();">
+        <select id="usermgmt-role-filter" style="padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:.82rem;" onchange="loadUserMgmt()">
+          <option value="">All roles</option>
+          <option value="mother">Mother</option>
+          <option value="doctor">Doctor</option>
+          <option value="health_worker">Health Worker</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button onclick="loadUserMgmt()" style="padding:9px 16px;border-radius:8px;background:#4c3fc9;color:#fff;font-weight:600;font-size:.82rem;">Search</button>
+      </div>
+      <div style="overflow-y:auto;max-height:52vh;">
+        <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+          <thead>
+            <tr style="text-align:left;color:#888;border-bottom:1px solid #eee;">
+              <th style="padding:8px;">Name</th>
+              <th style="padding:8px;">Email</th>
+              <th style="padding:8px;">Role</th>
+              <th style="padding:8px;">Status</th>
+              <th style="padding:8px;"></th>
+            </tr>
+          </thead>
+          <tbody id="usermgmt-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="umtab-panel-requests" style="display:none;overflow-y:auto;max-height:60vh;">
+      <p style="font-size:.78rem;color:#888;margin-bottom:10px;">Users who couldn't log in and requested a password reset. Approving issues a one-time temporary password for you to share with them directly.</p>
+      <div id="pwreq-list"></div>
+    </div>
+
+    <div id="umtab-panel-demo" style="display:none;overflow-y:auto;max-height:60vh;">
+      <p style="font-size:.78rem;color:#888;margin-bottom:10px;">These are the app's seeded demo accounts, for setup and testing. Passwords are never shown here — use Reset Password on the All Users tab to issue a fresh temporary password for any account.</p>
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+        <thead>
+          <tr style="text-align:left;color:#888;border-bottom:1px solid #eee;">
+            <th style="padding:8px;">Name</th><th style="padding:8px;">Email</th><th style="padding:8px;">Role</th><th style="padding:8px;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="demoaccounts-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADMIN: CREATE USER MODAL ================= -->
+<div id="createuser-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:80;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:380px;max-width:92vw;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:1rem;color:var(--admin-2);">Create New User</h3>
+      <i class="fa-solid fa-xmark" onclick="closeCreateUser()" style="cursor:pointer;color:#999;"></i>
+    </div>
+    <div id="createuser-error" style="display:none;background:#fdeaea;color:#8f1d21;border:1px solid #f5c2c4;border-radius:8px;padding:9px 12px;font-size:.78rem;margin-bottom:12px;"></div>
+    <div class="field"><label>Full Name</label><div class="input-wrap" style="position:static;"><input id="cu-name" style="padding-left:12px;"></div></div>
+    <div class="field"><label>Email</label><div class="input-wrap" style="position:static;"><input id="cu-email" type="email" style="padding-left:12px;"></div></div>
+    <div class="field"><label>Role</label><div class="input-wrap" style="position:static;">
+      <select id="cu-role" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid #ddd;">
         <option value="mother">Mother</option>
         <option value="doctor">Doctor</option>
         <option value="health_worker">Health Worker</option>
         <option value="admin">Admin</option>
       </select>
-      <button onclick="loadUserMgmt()" style="padding:9px 16px;border-radius:8px;background:#4c3fc9;color:#fff;font-weight:600;font-size:.82rem;">Search</button>
-    </div>
-    <div style="overflow-y:auto;flex:1;">
-      <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
-        <thead>
-          <tr style="text-align:left;color:#888;border-bottom:1px solid #eee;">
-            <th style="padding:8px;">Name</th>
-            <th style="padding:8px;">Email</th>
-            <th style="padding:8px;">Role</th>
-            <th style="padding:8px;">Status</th>
-            <th style="padding:8px;"></th>
-          </tr>
-        </thead>
-        <tbody id="usermgmt-tbody"></tbody>
-      </table>
-    </div>
+    </div></div>
+    <div class="field"><label>Specialty (optional)</label><div class="input-wrap" style="position:static;"><input id="cu-specialty" style="padding-left:12px;"></div></div>
+    <button onclick="submitCreateUser()" class="signin-btn" style="width:100%;">Create User</button>
   </div>
 </div>
 
@@ -603,7 +670,10 @@
     <div class="ai-header">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Mama AI</h3>
-        <i class="fa-solid fa-xmark" onclick="closeMamaAI()" style="cursor:pointer;opacity:.85;"></i>
+        <div style="display:flex;gap:14px;align-items:center;">
+          <i class="fa-solid fa-volume-high" id="ai-voice-toggle" onclick="toggleAIVoice()" title="Read replies aloud" style="cursor:pointer;opacity:.55;"></i>
+          <i class="fa-solid fa-xmark" onclick="closeMamaAI()" style="cursor:pointer;opacity:.85;"></i>
+        </div>
       </div>
       <p>Your maternal health companion — for general guidance only. Always contact your doctor or health worker for anything urgent or specific to you.</p>
     </div>
@@ -871,6 +941,32 @@
       showLoginError(err.message);
     }
   });
+
+  function openForgotPassword(){
+    document.getElementById('forgot-password-error').style.display = 'none';
+    document.getElementById('forgot-password-success').style.display = 'none';
+    document.getElementById('forgot-password-email').value = document.getElementById('login-email').value.trim();
+    document.getElementById('forgot-password-modal').style.display = 'flex';
+  }
+  function closeForgotPassword(){
+    document.getElementById('forgot-password-modal').style.display = 'none';
+  }
+  async function submitForgotPassword(){
+    const email = document.getElementById('forgot-password-email').value.trim();
+    const errEl = document.getElementById('forgot-password-error');
+    const okEl = document.getElementById('forgot-password-success');
+    errEl.style.display = 'none';
+    okEl.style.display = 'none';
+    if (!email) { errEl.textContent = 'Please enter your email address.'; errEl.style.display = 'block'; return; }
+    try {
+      const data = await api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+      okEl.textContent = data.message;
+      okEl.style.display = 'block';
+    } catch(err){
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  }
 
   let tempPasswordForChange = null;
   async function submitForcePasswordChange(){
@@ -1172,7 +1268,9 @@
   // ============== ADMIN: USER MANAGEMENT ==============
   function openUserMgmt(){
     document.getElementById('usermgmt-modal').style.display = 'flex';
+    showUserMgmtTab('list');
     loadUserMgmt();
+    loadPasswordRequests(); // pre-load so the badge count is accurate even before switching tabs
   }
   function closeUserMgmt(){
     document.getElementById('usermgmt-modal').style.display = 'none';
@@ -1239,9 +1337,129 @@
     } catch(err){ alert(err.message); }
   }
 
+  // ============== ADMIN: USER MGMT TABS (Requests / Demo Accounts) ==============
+  function showUserMgmtTab(tab){
+    ['list','requests','demo'].forEach(t => {
+      document.getElementById('umtab-panel-' + t).style.display = (t === tab) ? '' : 'none';
+      const btn = document.getElementById('umtab-' + t);
+      btn.style.background = (t === tab) ? '#4c3fc9' : '#f0f1f5';
+      btn.style.color = (t === tab) ? '#fff' : '#444';
+    });
+    if (tab === 'requests') loadPasswordRequests();
+    if (tab === 'demo') loadDemoAccounts();
+  }
+
+  async function loadDemoAccounts(){
+    const tbody = document.getElementById('demoaccounts-tbody');
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:16px;text-align:center;color:#999;">Loading...</td></tr>`;
+    try {
+      const rows = await api('/api/users/demo-accounts');
+      tbody.innerHTML = rows.map(u => `
+        <tr style="border-bottom:1px solid #f2f2f5;">
+          <td style="padding:8px;font-weight:600;">${escapeHtml(u.name)}</td>
+          <td style="padding:8px;color:#666;">${escapeHtml(u.email)}</td>
+          <td style="padding:8px;">${escapeHtml(u.role)}</td>
+          <td style="padding:8px;">${escapeHtml(u.status)}</td>
+        </tr>`).join('') || `<tr><td colspan="4" style="padding:16px;text-align:center;color:#999;">No demo accounts found.</td></tr>`;
+    } catch(err){
+      tbody.innerHTML = `<tr><td colspan="4" style="padding:16px;text-align:center;color:#c0272d;">${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  async function loadPasswordRequests(){
+    const box = document.getElementById('pwreq-list');
+    box.innerHTML = `<div style="text-align:center;padding:16px;color:#999;">Loading...</div>`;
+    try {
+      const rows = await api('/api/users/password-resets');
+      const pending = rows.filter(r => r.status === 'pending');
+      const badge = document.getElementById('pwreq-badge');
+      if (pending.length) { badge.textContent = pending.length; badge.style.display = 'inline-block'; }
+      else { badge.style.display = 'none'; }
+
+      box.innerHTML = rows.length ? rows.map(r => `
+        <div class="list-row">
+          <div class="li-icon" style="background:#fdf6e3;color:#c9962c;"><i class="fa-solid fa-key"></i></div>
+          <div class="li-text" style="flex:1;">
+            <div class="t">${escapeHtml(r.name)} <span style="color:#999;font-weight:400;">(${escapeHtml(r.email)}, ${escapeHtml(r.role)})</span></div>
+            <div class="d">Requested ${new Date(r.requested_at).toLocaleString()} · ${r.status}</div>
+          </div>
+          ${r.status === 'pending' ? `
+            <div style="display:flex;gap:6px;">
+              <button onclick="approvePasswordRequest(${r.id}, '${escapeHtml(r.name).replace(/'/g, "\\'")}')" style="padding:6px 10px;border-radius:6px;background:#1c9a53;color:#fff;font-size:.72rem;font-weight:600;">Approve</button>
+              <button onclick="denyPasswordRequest(${r.id})" style="padding:6px 10px;border-radius:6px;background:#fdeaea;color:#c0272d;font-size:.72rem;font-weight:600;">Deny</button>
+            </div>` : ''}
+        </div>`).join('') : `<div class="empty-state"><i class="fa-solid fa-key"></i><span>No password reset requests.</span></div>`;
+    } catch(err){
+      box.innerHTML = `<div style="text-align:center;padding:16px;color:#c0272d;">${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  async function approvePasswordRequest(id, name){
+    if (!confirm(`Approve this reset for ${name}? They'll be given a temporary password and required to set a new one at next login.`)) return;
+    try {
+      const data = await api('/api/users/password-resets/' + id + '/approve', { method:'POST' });
+      alert(`Temporary password for ${name}:\n\n${data.tempPassword}\n\n${data.message}`);
+      loadPasswordRequests();
+    } catch(err){ alert(err.message); }
+  }
+  async function denyPasswordRequest(id){
+    if (!confirm('Deny this password reset request?')) return;
+    try {
+      await api('/api/users/password-resets/' + id + '/deny', { method:'POST' });
+      loadPasswordRequests();
+    } catch(err){ alert(err.message); }
+  }
+
+  function openCreateUser(){
+    document.getElementById('createuser-error').style.display = 'none';
+    document.getElementById('cu-name').value = '';
+    document.getElementById('cu-email').value = '';
+    document.getElementById('cu-specialty').value = '';
+    document.getElementById('createuser-modal').style.display = 'flex';
+  }
+  function closeCreateUser(){
+    document.getElementById('createuser-modal').style.display = 'none';
+  }
+  async function submitCreateUser(){
+    const name = document.getElementById('cu-name').value.trim();
+    const email = document.getElementById('cu-email').value.trim();
+    const role = document.getElementById('cu-role').value;
+    const specialty = document.getElementById('cu-specialty').value.trim();
+    const errEl = document.getElementById('createuser-error');
+    errEl.style.display = 'none';
+    if (!name || !email) { errEl.textContent = 'Name and email are required.'; errEl.style.display = 'block'; return; }
+    try {
+      const data = await api('/api/users', { method:'POST', body: JSON.stringify({ name, email, role, specialty: specialty || undefined }) });
+      closeCreateUser();
+      alert(`Account created for ${name}.\n\nTemporary password:\n${data.tempPassword}\n\n${data.message}`);
+      loadUserMgmt();
+      refreshDashboard();
+    } catch(err){
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  }
+
   // ============== MAMA AI ==============
   let aiHistory = [];
+  let aiVoiceOn = false;
   const AI_CHIPS = ['Nutrition tips', 'Common symptoms', 'Is this normal?', 'Exercise during pregnancy', 'Trouble sleeping'];
+
+  function toggleAIVoice(){
+    aiVoiceOn = !aiVoiceOn;
+    const icon = document.getElementById('ai-voice-toggle');
+    icon.style.opacity = aiVoiceOn ? '1' : '.55';
+    icon.className = aiVoiceOn ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+    if (!aiVoiceOn && window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+
+  function speakText(text){
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.98;
+    window.speechSynthesis.speak(utter);
+  }
 
   function openMamaAI(){
     document.getElementById('mamaai-modal').style.display = 'flex';
@@ -1271,6 +1489,14 @@
     const bubble = document.createElement('div');
     bubble.className = 'ai-bubble ' + (who === 'user' ? 'user' : 'bot');
     bubble.textContent = text;
+    if (who !== 'user' && 'speechSynthesis' in window) {
+      const speakBtn = document.createElement('i');
+      speakBtn.className = 'fa-solid fa-volume-low';
+      speakBtn.title = 'Read aloud';
+      speakBtn.style.cssText = 'cursor:pointer;opacity:.5;margin-left:8px;font-size:.8em;';
+      speakBtn.onclick = () => speakText(text);
+      bubble.appendChild(speakBtn);
+    }
     box.appendChild(bubble);
     if (needsProvider) {
       const escBtn = document.createElement('div');
@@ -1280,6 +1506,7 @@
       box.appendChild(escBtn);
     }
     box.scrollTop = box.scrollHeight;
+    if (who !== 'user' && aiVoiceOn) speakText(text);
     return bubble;
   }
 
@@ -1605,6 +1832,12 @@
       const me = await api('/api/users/me');
       const appts = await api('/api/appointments');
       const completed = appts.filter(a => a.status === 'completed').length;
+      let records = [], payments = [];
+      try { records = await api('/api/medical-records/me'); } catch(e){}
+      try { payments = await api('/api/payments'); } catch(e){}
+
+      const recordIcons = { antenatal_visit: 'fa-stethoscope', lab_result: 'fa-flask', prescription: 'fa-pills', delivery_note: 'fa-baby', postpartum_checkup: 'fa-heart-pulse', vaccination: 'fa-syringe' };
+
       box.innerHTML = `
         <div style="text-align:center;margin-bottom:18px;">
           <div class="avatar" style="width:64px;height:64px;font-size:1.5rem;margin:0 auto 10px;">${escapeHtml(me.name.charAt(0).toUpperCase())}</div>
@@ -1616,12 +1849,28 @@
           <div class="stat-card" style="background:#e6f7ed;"><div class="num" style="color:#1c9a53;">${completed}</div><div class="label">Completed Visits</div></div>
         </div>
         <div class="panel-title" style="font-size:.9rem;">Visit History</div>
-        <div class="panel-box">
+        <div class="panel-box" style="margin-bottom:18px;">
           ${appts.length ? appts.map(a => `
             <div class="list-row">
               <div class="li-icon" style="background:#e9f0fe;color:#2e5df0;"><i class="fa-regular fa-calendar"></i></div>
               <div class="li-text"><div class="t">${escapeHtml(a.reason || 'Appointment')}</div><div class="d">${a.scheduled_for || 'Date TBC'} · ${a.status}${a.provider_name ? ' · ' + escapeHtml(a.provider_name) : ''}</div></div>
             </div>`).join('') : `<div class="empty-state"><i class="fa-regular fa-calendar"></i><span>No visits recorded yet.</span></div>`}
+        </div>
+        <div class="panel-title" style="font-size:.9rem;">Medical Records</div>
+        <div class="panel-box" style="margin-bottom:18px;">
+          ${records.length ? records.map(r => `
+            <div class="list-row">
+              <div class="li-icon" style="background:#f4ecfb;color:#8b3fc9;"><i class="fa-solid ${recordIcons[r.record_type] || 'fa-notes-medical'}"></i></div>
+              <div class="li-text"><div class="t">${escapeHtml(r.title)}</div><div class="d">${new Date(r.recorded_at).toLocaleDateString()}${r.provider_name ? ' · ' + escapeHtml(r.provider_name) : ''}${r.details ? ' — ' + escapeHtml(r.details) : ''}</div></div>
+            </div>`).join('') : `<div class="empty-state"><i class="fa-solid fa-notes-medical"></i><span>No medical records yet.</span></div>`}
+        </div>
+        <div class="panel-title" style="font-size:.9rem;">Payments</div>
+        <div class="panel-box">
+          ${payments.length ? payments.map(p => `
+            <div class="list-row">
+              <div class="li-icon" style="background:#fdf6e3;color:#c9962c;"><i class="fa-solid fa-money-bill-wave"></i></div>
+              <div class="li-text"><div class="t">${Number(p.amount).toLocaleString()} ${escapeHtml(p.currency)} — ${escapeHtml(p.description || p.method)}</div><div class="d">${new Date(p.created_at).toLocaleDateString()} · ${escapeHtml(p.method)} · ${escapeHtml(p.status)}</div></div>
+            </div>`).join('') : `<div class="empty-state"><i class="fa-solid fa-money-bill-wave"></i><span>No payments recorded yet.</span></div>`}
         </div>`;
     } catch(err){
       box.innerHTML = `<div style="text-align:center;padding:20px;color:#c0272d;">${escapeHtml(err.message)}</div>`;

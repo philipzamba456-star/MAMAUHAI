@@ -2,8 +2,9 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../db/database');
-const { JWT_SECRET } = require('../middleware/auth');
+const { JWT_SECRET, authRequired } = require('../middleware/auth');
 
+module.exports = (io) => {
 const router = express.Router();
 
 router.post('/register', async (req, res) => {
@@ -12,7 +13,9 @@ router.post('/register', async (req, res) => {
     if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'name, email, password and role are required.' });
     }
-    if (!['mother', 'doctor', 'health_worker', 'admin'].includes(role)) {
+    // Admin accounts can only be created by an existing administrator
+    // (POST /api/users), never through public self-registration.
+    if (!['mother', 'doctor', 'health_worker'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role.' });
     }
 
@@ -90,4 +93,53 @@ router.post('/change-password', authRequired, async (req, res) => {
   }
 });
 
-module.exports = router;
+// A user who cannot log in requests a password reset. This does NOT reset
+// anything by itself — it creates a pending request that an administrator
+// must review and approve from the admin dashboard. This avoids ever
+// emailing/SMS-ing a reset link (no email/SMS provider is configured for
+// this app) while still giving locked-out users a path back in.
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
+
+    const result = await pool.query('SELECT id, name, email, role FROM users WHERE email = $1', [email]);
+    const user = result.rows[0];
+
+    // Always return the same success message whether or not the account
+    // exists, so this endpoint can't be used to check which emails are
+    // registered.
+    const genericResponse = {
+      success: true,
+      message: 'If an account exists for that email, a request has been sent to an administrator. You will be able to sign in again once it is approved.',
+    };
+
+    if (!user) return res.json(genericResponse);
+
+    // Avoid piling up duplicate pending requests for the same user.
+    const existingPending = await pool.query(
+      `SELECT id FROM password_reset_requests WHERE user_id = $1 AND status = 'pending'`,
+      [user.id]
+    );
+    if (existingPending.rows.length) return res.json(genericResponse);
+
+    await pool.query('INSERT INTO password_reset_requests (user_id) VALUES ($1)', [user.id]);
+
+    const admins = await pool.query(`SELECT id FROM users WHERE role = 'admin' AND status = 'active'`);
+    for (const admin of admins.rows) {
+      const notif = await pool.query(
+        `INSERT INTO notifications (user_id, type, body) VALUES ($1,'password_reset',$2) RETURNING *`,
+        [admin.id, `${user.name} (${user.email}) requested a password reset.`]
+      );
+      if (io) io.to(`user:${admin.id}`).emit('notification', notif.rows[0]);
+    }
+
+    res.json(genericResponse);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Something went wrong submitting your request.' });
+  }
+});
+
+return router;
+};
