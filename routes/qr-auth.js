@@ -6,7 +6,20 @@ const { pool } = require('../db/database');
 const { JWT_SECRET, authRequired } = require('../middleware/auth');
 
 const SESSION_TTL_MS = 3 * 60 * 1000; // 3 minutes
-const QR_PREFIX = 'mamauhai-login:';
+const QR_PREFIX = 'mamauhai-login:'; // legacy format, still accepted
+
+function extractToken(raw){
+  if (!raw) return raw;
+  if (raw.startsWith(QR_PREFIX)) return raw.slice(QR_PREFIX.length);
+  try {
+    const url = new URL(raw);
+    const fromQuery = url.searchParams.get('qrlogin');
+    if (fromQuery) return fromQuery;
+  } catch (e) {
+    // not a URL — fall through and treat it as a bare token
+  }
+  return raw;
+}
 
 module.exports = () => {
 const router = express.Router();
@@ -24,8 +37,14 @@ router.post('/start', async (req, res) => {
       `INSERT INTO qr_login_sessions (token, status, expires_at) VALUES ($1, 'pending', $2)`,
       [token, expiresAt]
     );
-    const qrSvg = await QRCode.toString(QR_PREFIX + token, { type: 'svg', margin: 1, width: 240 });
-    res.json({ token, qrSvg, expiresIn: SESSION_TTL_MS / 1000 });
+    // Encode a real URL (not just a bare token) so scanning with the
+    // phone's own camera app opens it directly in a browser — no
+    // in-app scanner required. The in-app camera scanner (used for
+    // desktop-without-a-handy-QR-app cases) still works too, since it
+    // just extracts the token from this same URL.
+    const approveUrl = `${req.protocol}://${req.get('host')}/?qrlogin=${token}`;
+    const qrSvg = await QRCode.toString(approveUrl, { type: 'svg', margin: 1, width: 240 });
+    res.json({ token, qrSvg, approveUrl, expiresIn: SESSION_TTL_MS / 1000 });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not start a QR login session.' });
@@ -79,7 +98,7 @@ router.post('/approve', authRequired, async (req, res) => {
   try {
     let { token } = req.body;
     if (!token) return res.status(400).json({ error: 'Missing QR token.' });
-    if (token.startsWith(QR_PREFIX)) token = token.slice(QR_PREFIX.length);
+    token = extractToken(token);
 
     const result = await pool.query('SELECT * FROM qr_login_sessions WHERE token = $1', [token]);
     const session = result.rows[0];

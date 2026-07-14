@@ -306,12 +306,26 @@
       <h3 style="font-size:1.05rem;color:#8f1d21;">Sign in with QR code</h3>
       <i class="fa-solid fa-xmark" onclick="closeQRLogin()" style="cursor:pointer;color:#999;"></i>
     </div>
-    <p style="font-size:.78rem;color:#777;margin-bottom:16px;">Open Mama Uhai on a device where you're already signed in, choose <strong>Log In Another Device</strong> in the sidebar, and scan this code.</p>
+    <p style="font-size:.78rem;color:#777;margin-bottom:16px;">Scan this with your phone's camera — if you're already signed in there, it will ask you to approve. Or open Mama Uhai on another device and use <strong>Log In Another Device</strong> in the sidebar.</p>
     <div id="qr-login-code" style="display:flex;align-items:center;justify-content:center;min-height:240px;background:#faf7f2;border-radius:12px;padding:12px;margin-bottom:14px;">
       <span style="color:#999;font-size:.8rem;">Generating code...</span>
     </div>
     <div id="qr-login-status" style="font-size:.8rem;color:#8f1d21;font-weight:600;margin-bottom:6px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Waiting for you to scan...</div>
     <a href="#" onclick="closeQRLogin();return false;" style="font-size:.78rem;color:#777;">Use email &amp; password instead</a>
+  </div>
+</div>
+
+<!-- ================= QR APPROVE CONFIRM (opened a QR link while already signed in) ================= -->
+<div id="qr-approve-modal" style="display:none;position:fixed;inset:0;background:rgba(10,10,14,.85);z-index:110;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px;width:360px;max-width:90vw;text-align:center;">
+    <div style="width:56px;height:56px;border-radius:50%;background:#fdeaea;color:#c0272d;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;"><i class="fa-solid fa-qrcode"></i></div>
+    <h3 style="font-size:1.05rem;color:#333;margin-bottom:8px;">Sign in on another device?</h3>
+    <p style="font-size:.82rem;color:#777;margin-bottom:18px;">You're signed in here as <strong id="qr-approve-name">—</strong>. Approve to sign in as you on the device that showed this QR code.</p>
+    <div id="qr-approve-status" style="font-size:.8rem;margin-bottom:12px;min-height:20px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="cancelQRApprove()" style="flex:1;padding:11px;border-radius:9px;background:#f0f1f5;color:#444;font-weight:600;">Cancel</button>
+      <button onclick="confirmQRApprove()" class="signin-btn" style="flex:1;margin:0;">Approve</button>
+    </div>
   </div>
 </div>
 
@@ -990,6 +1004,13 @@
       }
     } else {
       enterApp();
+      if (pendingQRLoginToken) {
+        const t = pendingQRLoginToken;
+        pendingQRLoginToken = null;
+        api('/api/auth/qr/approve', { method: 'POST', body: JSON.stringify({ token: t }) })
+          .then(() => alert('Signed in — and your other device has been signed in too.'))
+          .catch(() => { /* link may have expired between scan and login; not worth blocking the user over */ });
+      }
     }
   }
 
@@ -1070,7 +1091,7 @@
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const code = (typeof jsQR === 'function') ? jsQR(imageData.data, imageData.width, imageData.height) : null;
-    if (code && code.data && code.data.startsWith('mamauhai-login:')) {
+    if (code && code.data && (code.data.includes('qrlogin=') || code.data.startsWith('mamauhai-login:'))) {
       approveQRScan(code.data);
       return;
     }
@@ -2288,6 +2309,51 @@
   // Auto-login if a token is already stored (page refresh)
   if (token && currentUser) {
     enterApp();
+  }
+
+  // ============== Handle a QR login link opened directly ==============
+  // A phone's regular camera app can't run our in-page JS scanner, but it
+  // CAN open a URL. The QR code encodes a link back to this same page with
+  // ?qrlogin=<token> — if this device is already signed in, we ask to
+  // confirm and approve right here, no camera step needed at all. If not,
+  // we hold onto the token and approve automatically right after login.
+  let pendingQRLoginToken = null;
+  (function handleQRLoginLink(){
+    const params = new URLSearchParams(window.location.search);
+    const qrToken = params.get('qrlogin');
+    if (!qrToken) return;
+    // Strip it from the address bar so a refresh doesn't re-trigger this.
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+
+    if (token && currentUser) {
+      showQRApproveConfirm(qrToken);
+    } else {
+      pendingQRLoginToken = qrToken;
+      document.getElementById('login-screen').style.display = 'flex';
+      showLoginError('Sign in below to approve the sign-in request from your other device.');
+    }
+  })();
+
+  function showQRApproveConfirm(qrToken){
+    document.getElementById('qr-approve-name').textContent = currentUser.name;
+    document.getElementById('qr-approve-modal').style.display = 'flex';
+    document.getElementById('qr-approve-modal').dataset.token = qrToken;
+  }
+  async function confirmQRApprove(){
+    const qrToken = document.getElementById('qr-approve-modal').dataset.token;
+    const statusEl = document.getElementById('qr-approve-status');
+    statusEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Approving...';
+    try {
+      await api('/api/auth/qr/approve', { method: 'POST', body: JSON.stringify({ token: qrToken }) });
+      statusEl.innerHTML = '<span style="color:#1c9a53;"><i class="fa-solid fa-circle-check"></i> Your other device is now signed in.</span>';
+      setTimeout(() => { document.getElementById('qr-approve-modal').style.display = 'none'; }, 1800);
+    } catch(err){
+      statusEl.innerHTML = '<span style="color:#c0272d;">' + escapeHtml(err.message) + '</span>';
+    }
+  }
+  function cancelQRApprove(){
+    document.getElementById('qr-approve-modal').style.display = 'none';
   }
 </script>
 </body>
