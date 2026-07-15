@@ -243,9 +243,23 @@
   body.large-text-mode .qa-card .qt{font-size:.95rem;}
   body.large-text-mode .list-row .t{font-size:1rem;}
   body.large-text-mode .list-row .d{font-size:.88rem;}
+  .toast-stack{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:200;
+    display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none;
+  }
+  .toast{
+    background:#1c1c22; color:#fff; padding:12px 18px; border-radius:10px;
+    font-size:.85rem; font-weight:600; box-shadow:0 6px 20px rgba(0,0,0,.25);
+    display:flex; align-items:center; gap:10px; max-width:88vw; text-align:left;
+    opacity:0; transform:translateY(-10px); transition:opacity .25s, transform .25s;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+  .toast.success{background:#1c9a53;}
+  .toast.error{background:#c0272d;}
 </style>
 </head>
 <body>
+<div class="toast-stack" id="toast-stack"></div>
 
 <!-- ================= LOGIN SCREEN ================= -->
 <div id="login-screen">
@@ -984,6 +998,20 @@
     }
   });
 
+  function showToast(message, type){
+    const stack = document.getElementById('toast-stack');
+    const el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info';
+    el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(message)}</span>`;
+    stack.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 300);
+    }, 4200);
+  }
+
   function completeLogin(data, plainPassword){
     token = data.token;
     currentUser = data.user;
@@ -999,7 +1027,7 @@
       } else {
         // Signed in via QR — we don't have their password to complete the
         // forced-change flow, so ask them to do it the regular way once.
-        alert('Your account needs a password change before continuing. Please sign in once with your email and temporary password to set a new one.');
+        showToast('Your account needs a password change. Please sign in with your email and temporary password to set a new one.', 'error');
         document.getElementById('login-screen').style.display = 'flex';
       }
     } else {
@@ -1008,7 +1036,7 @@
         const t = pendingQRLoginToken;
         pendingQRLoginToken = null;
         api('/api/auth/qr/approve', { method: 'POST', body: JSON.stringify({ token: t }) })
-          .then(() => alert('Signed in — and your other device has been signed in too.'))
+          .then(() => showToast('Signed in — your other device is now signed in too.', 'success'))
           .catch(() => { /* link may have expired between scan and login; not worth blocking the user over */ });
       }
     }
