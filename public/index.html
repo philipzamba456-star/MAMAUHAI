@@ -198,11 +198,21 @@
   @media(max-width:720px){
     .sidebar{position:fixed; z-index:50; transform:translateX(-100%); transition:.25s; height:100vh; overflow-y:auto;}
     .sidebar.open{transform:translateX(0);}
-    .main{padding:20px 16px 50px;}
+    .main{padding:64px 16px 50px;}
     .role-grid{grid-template-columns:repeat(2,1fr);}
   }
-  .menu-toggle{display:none;}
+  .menu-toggle{
+    display:none; position:fixed; top:14px; left:14px; z-index:60;
+    width:42px; height:42px; border-radius:11px; background:rgba(20,20,26,.55);
+    backdrop-filter:blur(4px); color:#fff; align-items:center; justify-content:center;
+    font-size:1.1rem; cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,.25);
+  }
   @media(max-width:720px){.menu-toggle{display:flex;}}
+  .sidebar-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(10,10,14,.55); z-index:45;
+  }
+  .sidebar-backdrop.open{display:block;}
+  @media(min-width:721px){.sidebar-backdrop{display:none !important;}}
 
   /* ---------------- MAMA AI ---------------- */
   .ai-header{
@@ -399,6 +409,10 @@
     <button onclick="submitForcePasswordChange()" class="signin-btn" style="width:100%;">Set New Password</button>
   </div>
 </div>
+
+<!-- Mobile menu toggle — works across whichever role dashboard is currently active -->
+<div class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
 <div class="app" id="app-admin">
   <aside class="sidebar" style="background:linear-gradient(180deg,var(--admin-1),var(--admin-2));">
@@ -2380,6 +2394,28 @@
       statusEl.innerHTML = '<span style="color:#c0272d;">' + escapeHtml(err.message) + '</span>';
     }
   }
+  // ============== MOBILE MENU (hamburger) ==============
+  function getActiveSidebar(){
+    const activeApp = document.querySelector('.app.active');
+    return activeApp ? activeApp.querySelector('.sidebar') : null;
+  }
+  function toggleSidebar(){
+    const sidebar = getActiveSidebar();
+    if (!sidebar) return;
+    const isOpen = sidebar.classList.toggle('open');
+    document.getElementById('sidebar-backdrop').classList.toggle('open', isOpen);
+  }
+  function closeSidebar(){
+    const sidebar = getActiveSidebar();
+    if (sidebar) sidebar.classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('open');
+  }
+  // Tapping any nav item or sign-out closes the drawer automatically, same
+  // as any normal mobile app menu.
+  document.querySelectorAll('.sidebar .nav-item, .sidebar .signout').forEach((el) => {
+    el.addEventListener('click', closeSidebar);
+  });
+
   function cancelQRApprove(){
     document.getElementById('qr-approve-modal').style.display = 'none';
   }
