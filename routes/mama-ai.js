@@ -10,11 +10,14 @@ const router = express.Router();
 // GEMINI_API_KEY or GROQ_API_KEY in the environment. It is no longer the
 // primary path: the offline knowledge base below always works, with no
 // internet connection and no API key required.
-let GoogleGenerativeAI;
+//
+// Uses @google/genai, Google's current SDK. The older @google/generative-ai
+// package this originally used was deprecated by Google in late 2025.
+let GoogleGenAI;
 try {
-  ({ GoogleGenerativeAI } = require('@google/generative-ai'));
+  ({ GoogleGenAI } = require('@google/genai'));
 } catch {
-  GoogleGenerativeAI = null;
+  GoogleGenAI = null;
 }
 
 const SYSTEM_PROMPT = `You are Mama AI, a warm, friendly, and genuinely knowledgeable maternal health companion inside the Mama Uhai app. You talk to pregnant women and new mothers, mostly in Uganda and East Africa, so keep advice practical and locally relevant where it matters.
@@ -133,11 +136,11 @@ function offlineAnswer(message) {
 module.exports = () => {
   const geminiKey = process.env.GEMINI_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
-  const cloudProvider = geminiKey && GoogleGenerativeAI ? 'gemini' : groqKey ? 'groq' : null;
+  const cloudProvider = geminiKey && GoogleGenAI ? 'gemini' : groqKey ? 'groq' : null;
 
   const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-  const genAI = geminiKey && GoogleGenerativeAI ? new GoogleGenerativeAI(geminiKey) : null;
+  const genAI = geminiKey && GoogleGenAI ? new GoogleGenAI({ apiKey: geminiKey }) : null;
 
   async function askCloud(message, history) {
     const priorMessages = Array.isArray(history) ? history.slice(-20) : [];
@@ -148,14 +151,17 @@ module.exports = () => {
 
     let rawText;
     if (cloudProvider === 'gemini') {
-      const model = genAI.getGenerativeModel({ model: geminiModel, systemInstruction: SYSTEM_PROMPT });
       const geminiHistory = trimmed.slice(0, -1).map((m) => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }],
       }));
-      const chat = model.startChat({ history: geminiHistory });
-      const result = await chat.sendMessage(message.slice(0, 4000));
-      rawText = result.response.text();
+      const chat = genAI.chats.create({
+        model: geminiModel,
+        config: { systemInstruction: SYSTEM_PROMPT },
+        history: geminiHistory,
+      });
+      const result = await chat.sendMessage({ message: message.slice(0, 4000) });
+      rawText = result.text;
     } else {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
