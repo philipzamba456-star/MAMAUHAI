@@ -55,6 +55,7 @@ app.use('/api/auth/qr', require('./routes/qr-auth')());
 app.use('/api/payments', require('./routes/payments')(io));
 app.use('/api/reviews', require('./routes/reviews')(io));
 app.use('/api/medical-records', require('./routes/medical-records')(io));
+app.use('/api/hospitals', require('./routes/hospitals'));
 
 app.get('/api/health', async (req, res) => {
   let dbStatus = 'unknown';

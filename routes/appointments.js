@@ -17,34 +17,51 @@ module.exports = (io) => {
     let result;
     if (req.user.role === 'mother') {
       result = await pool.query(
-        `SELECT a.*, p.name AS provider_name FROM appointments a
+        `SELECT a.*, p.name AS provider_name, h.name AS hospital_name FROM appointments a
          LEFT JOIN users p ON p.id = a.provider_id
+         LEFT JOIN hospitals h ON h.id = a.hospital_id
          WHERE a.mother_id = $1 ORDER BY a.created_at DESC`,
         [req.user.id]
       );
     } else if (req.user.role === 'doctor' || req.user.role === 'health_worker') {
       result = await pool.query(
-        `SELECT a.*, m.name AS mother_name FROM appointments a
+        `SELECT a.*, m.name AS mother_name, h.name AS hospital_name FROM appointments a
          JOIN users m ON m.id = a.mother_id
+         LEFT JOIN hospitals h ON h.id = a.hospital_id
          WHERE a.provider_id = $1 ORDER BY a.created_at DESC`,
         [req.user.id]
       );
     } else {
       result = await pool.query(
-        `SELECT a.*, m.name AS mother_name, p.name AS provider_name FROM appointments a
+        `SELECT a.*, m.name AS mother_name, p.name AS provider_name, h.name AS hospital_name FROM appointments a
          JOIN users m ON m.id = a.mother_id
          LEFT JOIN users p ON p.id = a.provider_id
+         LEFT JOIN hospitals h ON h.id = a.hospital_id
          ORDER BY a.created_at DESC`
       );
     }
     res.json(result.rows);
   });
 
+  const CONSULTATION_FEE = 20000; // UGX — flat estimated fee shown at booking time
+
   router.post('/', authRequired, requireRole('mother'), async (req, res) => {
-    const { reason, scheduled_for } = req.body;
+    const { reason, scheduled_for, hospital_id, payment_method } = req.body;
+
+    let paymentId = null;
+    if (payment_method) {
+      const method = ['mobile_money', 'cash', 'insurance', 'bank_transfer'].includes(payment_method) ? payment_method : 'mobile_money';
+      const paymentResult = await pool.query(
+        `INSERT INTO payments (mother_id, amount, method, description, status)
+         VALUES ($1,$2,$3,$4,'pending') RETURNING *`,
+        [req.user.id, CONSULTATION_FEE, method, `Consultation fee: ${reason || 'Appointment booking'}`]
+      );
+      paymentId = paymentResult.rows[0].id;
+    }
+
     const { rows } = await pool.query(
-      'INSERT INTO appointments (mother_id, reason, scheduled_for) VALUES ($1,$2,$3) RETURNING *',
-      [req.user.id, reason || null, scheduled_for || null]
+      'INSERT INTO appointments (mother_id, reason, scheduled_for, hospital_id, payment_id) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+      [req.user.id, reason || null, scheduled_for || null, hospital_id || null, paymentId]
     );
     const appt = rows[0];
 

@@ -176,13 +176,29 @@ async function init() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       expires_at TIMESTAMPTZ NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS hospitals (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      location TEXT,
+      note TEXT,
+      phone TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `);
 
   // Migrations for databases created before these columns existed
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS due_date DATE;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false;`);
+  await pool.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS hospital_id INTEGER REFERENCES hospitals(id) ON DELETE SET NULL;`);
+  await pool.query(`ALTER TABLE rides ADD COLUMN IF NOT EXISTS ride_type TEXT NOT NULL DEFAULT 'safeboda' CHECK(ride_type IN ('ambulance','uber','safeboda'));`);
+  await pool.query(`ALTER TABLE rides ADD COLUMN IF NOT EXISTS hospital_id INTEGER REFERENCES hospitals(id) ON DELETE SET NULL;`);
+  await pool.query(`ALTER TABLE rides ADD COLUMN IF NOT EXISTS fare NUMERIC;`);
+  await pool.query(`ALTER TABLE rides ADD COLUMN IF NOT EXISTS payment_id INTEGER REFERENCES payments(id) ON DELETE SET NULL;`);
+  await pool.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_id INTEGER REFERENCES payments(id) ON DELETE SET NULL;`);
 
   await seedUsersAndCoreData();
+  await seedHospitals();
   await seedExtendedSampleData();
 }
 
@@ -307,6 +323,25 @@ async function seedUsersAndCoreData() {
 // Seeds payments, reviews, and medical records exactly once (these tables
 // are brand new, so gating on "table is empty" is safe and won't duplicate
 // on restarts, regardless of how long the users table has existed).
+async function seedHospitals() {
+  const { rows } = await pool.query('SELECT COUNT(*) FROM hospitals');
+  if (Number(rows[0].count) > 0) return;
+
+  const hospitals = [
+    { name: 'Mulago National Referral Hospital', location: 'Kampala', note: 'Full maternity ward, NICU, 24/7 emergency obstetric care.', phone: '+256 414 554 000' },
+    { name: 'Kawempe National Referral Hospital', location: 'Kampala', note: 'Specialist maternal & newborn health referral center.', phone: '+256 414 566 130' },
+    { name: 'Nsambya Hospital', location: 'Kampala', note: 'Private, well-equipped maternity unit with antenatal clinic.', phone: '+256 414 267 012' },
+    { name: 'St. Francis Hospital Nsambya', location: 'Kampala', note: 'General + maternity services, community outreach programs.', phone: '+256 414 267 025' },
+    { name: 'Mengo Hospital', location: 'Kampala', note: 'One of the oldest hospitals in Uganda, active maternity department.', phone: '+256 414 270 222' },
+  ];
+  for (const h of hospitals) {
+    await pool.query(
+      'INSERT INTO hospitals (name, location, note, phone) VALUES ($1,$2,$3,$4)',
+      [h.name, h.location, h.note, h.phone]
+    );
+  }
+}
+
 async function seedExtendedSampleData() {
   const { rows: payCount } = await pool.query('SELECT COUNT(*)::int AS c FROM payments');
   if (payCount[0].c > 0) return;

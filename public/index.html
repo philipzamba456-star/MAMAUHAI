@@ -597,13 +597,29 @@
 
     <!-- Simple booking modal -->
     <div id="booking-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;align-items:center;justify-content:center;">
-      <div style="background:#fff;border-radius:14px;padding:24px;width:340px;max-width:90vw;">
+      <div style="background:#fff;border-radius:14px;padding:24px;width:360px;max-width:90vw;max-height:88vh;overflow-y:auto;">
         <h3 style="font-size:1.05rem;margin-bottom:14px;color:var(--mother-teal-1);">Book an Appointment</h3>
         <div class="field"><label>Reason for visit</label><div class="input-wrap" style="position:static;"><input id="booking-reason" style="padding-left:12px;" placeholder="e.g. Routine checkup"></div></div>
         <div class="field"><label>Preferred date &amp; time</label><div class="input-wrap" style="position:static;"><input id="booking-date" type="datetime-local" style="padding-left:12px;"></div></div>
-        <div style="display:flex;gap:10px;margin-top:6px;">
+        <div class="field"><label>Hospital</label><div class="input-wrap" style="position:static;">
+          <select id="booking-hospital" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid #ddd;">
+            <option value="">Select a hospital...</option>
+          </select>
+        </div></div>
+        <div class="field"><label>Payment method</label><div class="input-wrap" style="position:static;">
+          <select id="booking-payment-method" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid #ddd;">
+            <option value="mobile_money">Mobile Money</option>
+            <option value="cash">Cash at facility</option>
+            <option value="insurance">Insurance</option>
+            <option value="bank_transfer">Bank Transfer</option>
+          </select>
+        </div></div>
+        <div style="background:#faf7f2;border-radius:9px;padding:10px 12px;font-size:.78rem;color:#666;margin-bottom:6px;display:flex;justify-content:space-between;">
+          <span>Estimated consultation fee</span><strong style="color:#8f1d21;">20,000 UGX</strong>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:10px;">
           <button onclick="closeBooking()" style="flex:1;padding:10px;border-radius:9px;background:#eee;color:#333;font-weight:600;">Cancel</button>
-          <button onclick="submitBooking()" style="flex:1;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;">Confirm</button>
+          <button onclick="submitBooking()" style="flex:1;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;">Confirm &amp; Pay</button>
         </div>
       </div>
     </div>
@@ -863,8 +879,40 @@
       <i class="fa-solid fa-xmark" onclick="closeRides()" style="cursor:pointer;color:#999;"></i>
     </div>
     <div style="padding:18px 22px;overflow-y:auto;flex:1;">
+      <label style="font-size:.78rem;font-weight:600;color:#555;display:block;margin-bottom:8px;">Transport type</label>
+      <div id="ride-type-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+        <div class="ride-type-option" data-ride-type="ambulance" onclick="selectRideType('ambulance')" style="border:2px solid #eee;border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;">
+          <i class="fa-solid fa-truck-medical" style="font-size:1.2rem;color:#c0272d;"></i>
+          <div style="font-size:.74rem;font-weight:700;margin-top:6px;">Ambulance</div>
+          <div style="font-size:.66rem;color:#999;">Emergency</div>
+        </div>
+        <div class="ride-type-option" data-ride-type="uber" onclick="selectRideType('uber')" style="border:2px solid #eee;border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;">
+          <i class="fa-solid fa-car" style="font-size:1.2rem;color:#1c1c22;"></i>
+          <div style="font-size:.74rem;font-weight:700;margin-top:6px;">Uber</div>
+          <div style="font-size:.66rem;color:#999;">~15,000 UGX</div>
+        </div>
+        <div class="ride-type-option" data-ride-type="safeboda" onclick="selectRideType('safeboda')" style="border:2px solid #eee;border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;">
+          <i class="fa-solid fa-motorcycle" style="font-size:1.2rem;color:#1c9a53;"></i>
+          <div style="font-size:.74rem;font-weight:700;margin-top:6px;">SafeBoda</div>
+          <div style="font-size:.66rem;color:#999;">~6,000 UGX</div>
+        </div>
+      </div>
       <div class="field"><label>Pickup location</label><div class="input-wrap" style="position:static;"><input id="ride-pickup" style="padding-left:12px;" placeholder="e.g. Home, Kireka"></div></div>
+      <div class="field"><label>Going to hospital (optional)</label><div class="input-wrap" style="position:static;">
+        <select id="ride-hospital" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid #ddd;" onchange="onRideHospitalChange()">
+          <option value="">None — I'll type a destination</option>
+        </select>
+      </div></div>
       <div class="field"><label>Destination</label><div class="input-wrap" style="position:static;"><input id="ride-destination" style="padding-left:12px;" placeholder="e.g. Mulago Hospital"></div></div>
+      <div class="field" id="ride-payment-field"><label>Payment method</label><div class="input-wrap" style="position:static;">
+        <select id="ride-payment-method" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid #ddd;">
+          <option value="mobile_money">Mobile Money</option>
+          <option value="cash">Cash to driver</option>
+        </select>
+      </div></div>
+      <div style="background:#faf7f2;border-radius:9px;padding:10px 12px;font-size:.78rem;color:#666;margin-bottom:12px;display:flex;justify-content:space-between;">
+        <span>Estimated fare</span><strong id="ride-fare-display" style="color:#8f1d21;">Select a transport type</strong>
+      </div>
       <button onclick="submitRide()" style="width:100%;padding:10px;border-radius:9px;background:var(--mother-red-1);color:#fff;font-weight:600;margin-bottom:18px;">Request Ride</button>
       <div class="panel-title" style="font-size:.9rem;color:var(--mother-teal-1);">Your Ride Requests</div>
       <div id="rides-list"></div>
@@ -1313,17 +1361,39 @@
     catch(err){ alert(err.message); }
   }
 
-  function openBooking(){ document.getElementById('booking-modal').style.display = 'flex'; }
+  let hospitalsCache = null;
+  async function loadHospitalsIntoSelect(selectId){
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    try {
+      if (!hospitalsCache) hospitalsCache = await api('/api/hospitals');
+      const current = select.value;
+      select.innerHTML = '<option value="">Select a hospital...</option>' +
+        hospitalsCache.map(h => `<option value="${h.id}">${escapeHtml(h.name)} — ${escapeHtml(h.location || '')}</option>`).join('');
+      if (current) select.value = current;
+    } catch(err){ /* leave the default placeholder if this fails */ }
+  }
+
+  function openBooking(preselectHospitalId){
+    document.getElementById('booking-modal').style.display = 'flex';
+    loadHospitalsIntoSelect('booking-hospital').then(() => {
+      if (preselectHospitalId) document.getElementById('booking-hospital').value = preselectHospitalId;
+    });
+  }
   function closeBooking(){ document.getElementById('booking-modal').style.display = 'none'; }
   async function submitBooking(){
     const reason = document.getElementById('booking-reason').value.trim();
     const scheduled_for = document.getElementById('booking-date').value;
+    const hospital_id = document.getElementById('booking-hospital').value || null;
+    const payment_method = document.getElementById('booking-payment-method').value;
     try {
-      await api('/api/appointments', { method:'POST', body: JSON.stringify({ reason, scheduled_for }) });
+      await api('/api/appointments', { method:'POST', body: JSON.stringify({ reason, scheduled_for, hospital_id, payment_method }) });
       closeBooking();
       document.getElementById('booking-reason').value = '';
       document.getElementById('booking-date').value = '';
+      document.getElementById('booking-hospital').value = '';
       refreshDashboard();
+      showToast('Appointment booked — 20,000 UGX consultation fee recorded.', 'success');
     } catch(err){ alert(err.message); }
   }
 
@@ -1779,13 +1849,47 @@
     { name: 'Immunization', desc: 'Routine vaccinations for newborns and infants.' },
     { name: 'Nutrition Counseling', desc: 'Personalized guidance on eating well during pregnancy and breastfeeding.' },
   ];
-  const EDUCATION_ARTICLES = [
-    { title: 'Eating Well During Pregnancy', body: 'Focus on iron-rich foods (beans, leafy greens, meat), calcium (milk, small fish), and folic acid. Drink plenty of clean water and eat small, frequent meals if nausea is an issue.' },
-    { title: 'Warning Signs You Should Never Ignore', body: 'Heavy bleeding, severe headache with blurred vision, severe abdominal pain, reduced baby movement, high fever, or difficulty breathing all need immediate medical attention — go to the nearest hospital right away.' },
-    { title: 'Preparing for Labor', body: 'Pack a bag with essentials 2-3 weeks before your due date: ID, antenatal card, clothes for you and baby, sanitary pads, and any medication you take. Know the route to your chosen hospital.' },
-    { title: 'The First Weeks with Your Newborn', body: 'Breastfeed on demand, keep the baby warm and skin-to-skin often, watch for jaundice (yellowing skin/eyes), and attend your postnatal and immunization appointments on schedule.' },
-    { title: 'Caring for Your Mental Health', body: 'Feeling overwhelmed, tearful, or anxious after birth is common and treatable. If these feelings are intense or last more than two weeks, talk to your health worker or doctor — you deserve support too.' },
-  ];
+  const EDUCATION_BY_STAGE = {
+    trimester1: {
+      label: 'Trimester 1', sub: 'Weeks 1–13',
+      articles: [
+        { title: 'Starting Antenatal Care Early', body: 'Book your first antenatal visit as soon as you know you\'re pregnant, ideally before 12 weeks. Early care lets your provider check your health, estimate your due date, and catch any risks early.' },
+        { title: 'Nutrition in the First Trimester', body: 'Focus on folic acid (leafy greens, beans, fortified foods) to support your baby\'s early development, plus iron and enough clean water. Small, frequent meals often help with nausea.' },
+        { title: 'Common Early Symptoms', body: 'Nausea, tiredness, tender breasts, and mood changes are common as hormones shift. They\'re usually not a cause for concern, but persistent vomiting that stops you keeping food or water down needs medical attention.' },
+        { title: 'What to Avoid Early On', body: 'Avoid alcohol, smoking, and unprescribed medication. Limit caffeine. Talk to your provider before continuing any existing medication.' },
+        { title: 'Warning Signs in the First Trimester', body: 'Heavy bleeding, severe cramping, or severe dizziness/fainting should be checked immediately — go to your nearest hospital or health center.' },
+      ]
+    },
+    trimester2: {
+      label: 'Trimester 2', sub: 'Weeks 14–27',
+      articles: [
+        { title: 'Feeling Your Baby Move', body: 'Most mothers start feeling movement between 16–22 weeks. Once movement is established, get to know your baby\'s usual pattern — a noticeable, lasting drop in movement is worth getting checked.' },
+        { title: 'Staying Active Safely', body: 'Light to moderate exercise like walking, swimming, or prenatal yoga is generally safe and can ease back pain, improve sleep, and support an easier labor. Avoid activities with a high fall risk.' },
+        { title: 'Nutrition & Growth', body: 'Your calorie and protein needs rise as the baby grows. Keep prioritizing iron and calcium, and continue attending scheduled antenatal visits to monitor growth and blood pressure.' },
+        { title: 'Common Mid-Pregnancy Changes', body: 'Backache, mild swelling in the feet, and a growing belly are normal. Stretch marks and skin changes are common and not harmful.' },
+        { title: 'Warning Signs in the Second Trimester', body: 'Severe headache with vision changes or swelling of the face/hands can be signs of pre-eclampsia — seek care immediately. Also seek care for heavy bleeding, fever, or reduced fetal movement.' },
+      ]
+    },
+    trimester3: {
+      label: 'Trimester 3', sub: 'Weeks 28–40',
+      articles: [
+        { title: 'Preparing for Labor', body: 'Pack a bag with essentials 2–3 weeks before your due date: ID, antenatal card, clothes for you and baby, sanitary pads, and any medication you take. Know the route to your chosen hospital.' },
+        { title: 'Recognizing the Signs of Labor', body: 'Regular, strengthening contractions, your water breaking, or a bloody show can all signal labor is starting. If you\'re unsure, contact your provider or head to your facility to be checked.' },
+        { title: 'Late Pregnancy Danger Signs', body: 'Heavy bleeding, severe abdominal pain, severe headache with vision changes, reduced baby movement, or convulsions all need immediate in-person care — don\'t wait it out at home.' },
+        { title: 'Choosing Where to Deliver', body: 'Decide on your delivery facility in advance based on your risk level and what\'s available nearby. Discuss your birth plan with your provider, including who will be with you.' },
+        { title: 'Getting Ready Physically & Mentally', body: 'Rest when you can, keep attending antenatal visits, and talk through any fears with your provider or a trusted person — feeling anxious as your due date nears is completely normal.' },
+      ]
+    },
+    postpartum: {
+      label: 'Postpartum', sub: 'After birth',
+      articles: [
+        { title: 'The First Weeks with Your Newborn', body: 'Breastfeed on demand, keep the baby warm and skin-to-skin often, watch for jaundice (yellowing skin/eyes), and attend your postnatal and immunization appointments on schedule.' },
+        { title: 'Your Own Recovery', body: 'Rest as much as possible, eat well, and keep any wound (e.g. from a C-section) clean and dry. Attend your postnatal check-up so your provider can confirm you\'re healing well.' },
+        { title: 'Caring for Your Mental Health', body: 'Feeling overwhelmed, tearful, or anxious after birth is common and treatable. If these feelings are intense or last more than two weeks, talk to your health worker or doctor — you deserve support too.' },
+        { title: 'Family Planning After Birth', body: 'Talk to your provider about birth spacing and contraceptive options during a postnatal visit — many methods can start soon after delivery, even while breastfeeding.' },
+      ]
+    },
+  };
   const COSTS = [
     { item: 'Antenatal visit (public facility)', price: 'Free at government hospitals/health centers' },
     { item: 'Antenatal visit (private facility)', price: 'Approx. UGX 20,000 – 50,000' },
@@ -1803,12 +1907,25 @@
   function closeInfoModal(){
     document.getElementById('info-modal').style.display = 'none';
   }
-  function openHospitals(){
-    openInfoModal('Hospitals & Clinics', HOSPITALS.map(h => `
-      <div class="list-row" style="padding:12px 4px;">
-        <div class="li-icon" style="background:#f4ecfb;color:#8b3fc9;"><i class="fa-solid fa-hospital"></i></div>
-        <div class="li-text"><div class="t">${escapeHtml(h.name)}</div><div class="d">${escapeHtml(h.location)} · ${escapeHtml(h.note)}</div></div>
-      </div>`).join(''));
+  async function openHospitals(){
+    openInfoModal('Hospitals & Clinics', '<div style="text-align:center;padding:20px;color:#999;">Loading...</div>');
+    try {
+      if (!hospitalsCache) hospitalsCache = await api('/api/hospitals');
+      document.getElementById('info-modal-body').innerHTML = hospitalsCache.map(h => `
+        <div class="list-row" style="padding:12px 4px;align-items:flex-start;">
+          <div class="li-icon" style="background:#f4ecfb;color:#8b3fc9;"><i class="fa-solid fa-hospital"></i></div>
+          <div class="li-text" style="flex:1;">
+            <div class="t">${escapeHtml(h.name)}</div>
+            <div class="d">${escapeHtml(h.location || '')} · ${escapeHtml(h.note || '')}</div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button onclick="closeInfoModal();openBooking(${h.id});" style="padding:6px 10px;border-radius:7px;background:#fdeaea;color:#c0272d;font-size:.7rem;font-weight:700;">Book Here</button>
+              <button onclick="closeInfoModal();openRides(${h.id});" style="padding:6px 10px;border-radius:7px;background:#e9f0fe;color:#2e5df0;font-size:.7rem;font-weight:700;">Get a Ride Here</button>
+            </div>
+          </div>
+        </div>`).join('');
+    } catch(err){
+      document.getElementById('info-modal-body').innerHTML = `<div style="text-align:center;padding:20px;color:#c0272d;">${escapeHtml(err.message)}</div>`;
+    }
   }
   function openServices(){
     openInfoModal('Our Services', SERVICES.map(s => `
@@ -1817,12 +1934,46 @@
         <div class="li-text"><div class="t">${escapeHtml(s.name)}</div><div class="d">${escapeHtml(s.desc)}</div></div>
       </div>`).join(''));
   }
-  function openEducation(){
-    openInfoModal('Education Center', EDUCATION_ARTICLES.map(a => `
+
+  function guessCurrentStage(){
+    // If the mother has a due date on file, suggest the trimester that
+    // matches where she actually is right now instead of always opening
+    // to Trimester 1.
+    if (currentUser && currentUser.due_date) {
+      const due = new Date(currentUser.due_date);
+      const now = new Date();
+      const weeksLeft = (due - now) / (1000 * 60 * 60 * 24 * 7);
+      const weeksPregnant = 40 - weeksLeft;
+      if (weeksPregnant < 0) return 'trimester1';
+      if (weeksPregnant > 40) return 'postpartum';
+      if (weeksPregnant < 13) return 'trimester1';
+      if (weeksPregnant < 28) return 'trimester2';
+      return 'trimester3';
+    }
+    return 'trimester1';
+  }
+
+  function renderEducationStage(stageKey){
+    const stage = EDUCATION_BY_STAGE[stageKey];
+    const tabsHtml = Object.keys(EDUCATION_BY_STAGE).map(key => {
+      const s = EDUCATION_BY_STAGE[key];
+      const active = key === stageKey;
+      return `<button onclick="renderEducationStage('${key}')" style="padding:8px 12px;border-radius:8px;font-size:.74rem;font-weight:700;white-space:nowrap;background:${active ? 'var(--mother-teal-1)' : '#f0f1f5'};color:${active ? '#fff' : '#444'};">${s.label}</button>`;
+    }).join('');
+    const articlesHtml = stage.articles.map(a => `
       <div style="margin-bottom:16px;">
         <div style="font-weight:700;font-size:.88rem;margin-bottom:4px;color:var(--mother-teal-1);">${escapeHtml(a.title)}</div>
         <div style="font-size:.8rem;color:var(--text-mid);line-height:1.5;">${escapeHtml(a.body)}</div>
-      </div>`).join(''));
+      </div>`).join('');
+    document.getElementById('info-modal-body').innerHTML = `
+      <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:6px;padding-bottom:8px;">${tabsHtml}</div>
+      <div style="font-size:.72rem;color:#999;margin-bottom:14px;">${escapeHtml(stage.sub)}</div>
+      ${articlesHtml}`;
+  }
+
+  function openEducation(){
+    openInfoModal('Education Center', '');
+    renderEducationStage(guessCurrentStage());
   }
   function openCosts(){
     openInfoModal('Cost Estimates', `<table style="width:100%;border-collapse:collapse;font-size:.82rem;">
@@ -2091,8 +2242,40 @@
   }
 
   // ============== TRANSPORT / RIDES ==============
-  function openRides(){
+  const RIDE_FARES = { ambulance: 0, uber: 15000, safeboda: 6000 };
+  const RIDE_ICONS = { ambulance: 'fa-truck-medical', uber: 'fa-car', safeboda: 'fa-motorcycle' };
+  let selectedRideType = null;
+
+  function selectRideType(type){
+    selectedRideType = type;
+    document.querySelectorAll('.ride-type-option').forEach(el => {
+      const active = el.dataset.rideType === type;
+      el.style.borderColor = active ? 'var(--mother-red-1)' : '#eee';
+      el.style.background = active ? '#fdeaea' : 'transparent';
+    });
+    const fareDisplay = document.getElementById('ride-fare-display');
+    const fare = RIDE_FARES[type];
+    fareDisplay.textContent = fare === 0 ? 'Free (emergency service)' : `${fare.toLocaleString()} UGX`;
+    document.getElementById('ride-payment-field').style.display = fare === 0 ? 'none' : '';
+  }
+
+  async function onRideHospitalChange(){
+    const select = document.getElementById('ride-hospital');
+    const chosen = hospitalsCache && hospitalsCache.find(h => String(h.id) === select.value);
+    if (chosen) document.getElementById('ride-destination').value = chosen.name;
+  }
+
+  function openRides(preselectHospitalId){
     document.getElementById('rides-modal').style.display = 'flex';
+    selectedRideType = null;
+    document.getElementById('ride-fare-display').textContent = 'Select a transport type';
+    document.querySelectorAll('.ride-type-option').forEach(el => { el.style.borderColor = '#eee'; el.style.background = 'transparent'; });
+    loadHospitalsIntoSelect('ride-hospital').then(() => {
+      if (preselectHospitalId) {
+        document.getElementById('ride-hospital').value = preselectHospitalId;
+        onRideHospitalChange();
+      }
+    });
     loadRides();
   }
   function closeRides(){
@@ -2104,23 +2287,31 @@
       const rides = await api('/api/rides');
       box.innerHTML = rides.length ? rides.map(r => `
         <div class="list-row" style="padding:10px 4px;">
-          <div class="li-icon" style="background:#fdefe0;color:#e07a1f;"><i class="fa-solid fa-car"></i></div>
-          <div class="li-text"><div class="t">${escapeHtml(r.pickup)} → ${escapeHtml(r.destination)}</div><div class="d">${r.status} · ${new Date(r.created_at).toLocaleDateString()}</div></div>
+          <div class="li-icon" style="background:#fdefe0;color:#e07a1f;"><i class="fa-solid ${RIDE_ICONS[r.ride_type] || 'fa-car'}"></i></div>
+          <div class="li-text"><div class="t">${escapeHtml(r.pickup)} → ${escapeHtml(r.destination)}</div><div class="d">${r.status} · ${r.fare > 0 ? Number(r.fare).toLocaleString() + ' UGX · ' : (r.fare === 0 ? 'Free · ' : '')}${new Date(r.created_at).toLocaleDateString()}</div></div>
         </div>`).join('') : `<div class="empty-state"><i class="fa-solid fa-car"></i><span>No ride requests yet.</span></div>`;
     } catch(err){}
   }
   async function submitRide(){
     const pickup = document.getElementById('ride-pickup').value.trim();
     const destination = document.getElementById('ride-destination').value.trim();
+    const hospital_id = document.getElementById('ride-hospital').value || null;
+    const payment_method = document.getElementById('ride-payment-method').value;
+    if (!selectedRideType) return alert('Please choose a transport type.');
     if (!pickup || !destination) return alert('Please fill in both pickup and destination.');
     try {
-      await api('/api/rides', { method:'POST', body: JSON.stringify({ pickup, destination }) });
+      await api('/api/rides', { method:'POST', body: JSON.stringify({ pickup, destination, ride_type: selectedRideType, hospital_id, payment_method }) });
       document.getElementById('ride-pickup').value = '';
       document.getElementById('ride-destination').value = '';
+      document.getElementById('ride-hospital').value = '';
       loadRides();
       refreshDashboard();
+      const fare = RIDE_FARES[selectedRideType];
+      showToast(fare > 0 ? `${RIDE_TYPE_LABELS_JS[selectedRideType]} requested — ${fare.toLocaleString()} UGX fare recorded.` : `${RIDE_TYPE_LABELS_JS[selectedRideType]} requested.`, 'success');
     } catch(err){ alert(err.message); }
   }
+  const RIDE_TYPE_LABELS_JS = { ambulance: 'Ambulance', uber: 'Uber', safeboda: 'SafeBoda' };
+
 
   // ============== ACCESSIBILITY: LARGE TEXT ==============
   function toggleLargeText(){
