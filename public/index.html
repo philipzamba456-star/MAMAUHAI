@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mama Uhai — Maternal Health Platform</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#c0272d">
+<link rel="icon" href="/icons/icon-32.png" sizes="32x32">
+<link rel="icon" href="/icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mama Uhai">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Every Mother Deserves Safe, Dignified, and Supported Care.">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -318,8 +328,25 @@
         <div style="text-align:center;margin-top:14px;">
           <a href="#" onclick="openQRLogin();return false;" style="font-size:.8rem;color:#c0272d;font-weight:600;"><i class="fa-solid fa-qrcode"></i>&nbsp; Sign in with QR code</a>
         </div>
+        <div style="text-align:center;margin-top:10px;" id="install-app-row">
+          <a href="#" onclick="handleInstallClick();return false;" style="font-size:.78rem;color:#777;font-weight:600;"><i class="fa-solid fa-arrow-down-to-bracket"></i>&nbsp; Install Mama Uhai as an app</a>
+        </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ================= INSTALL APP (iOS instructions, since iOS can't be auto-prompted) ================= -->
+<div id="install-ios-modal" style="display:none;position:fixed;inset:0;background:rgba(10,10,14,.85);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:28px;width:340px;max-width:90vw;text-align:center;">
+    <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#d6363c,#8f1d21);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;"><i class="fa-solid fa-heart-pulse" style="color:#fff;font-size:1.4rem;"></i></div>
+    <h3 style="font-size:1.05rem;color:#333;margin-bottom:10px;">Install Mama Uhai</h3>
+    <p style="font-size:.82rem;color:#666;text-align:left;line-height:1.7;margin-bottom:18px;">
+      1. Tap the <strong>Share</strong> icon <i class="fa-solid fa-arrow-up-from-bracket"></i> at the bottom of Safari<br>
+      2. Scroll down and tap <strong>Add to Home Screen</strong><br>
+      3. Tap <strong>Add</strong> — Mama Uhai will appear as an app icon on your phone
+    </p>
+    <button onclick="document.getElementById('install-ios-modal').style.display='none';" class="signin-btn" style="width:100%;margin:0;">Got it</button>
   </div>
 </div>
 
@@ -2609,6 +2636,59 @@
 
   function cancelQRApprove(){
     document.getElementById('qr-approve-modal').style.display = 'none';
+  }
+
+  // ============== INSTALL AS APP (PWA — works for phone home screen AND desktop) ==============
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => { /* non-fatal — app still works without it */ });
+    });
+  }
+
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    const row = document.getElementById('install-app-row');
+    if (row) row.style.display = 'none';
+  });
+
+  function isRunningStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function isIOS(){
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+
+  async function handleInstallClick(){
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      if (choice && choice.outcome === 'accepted') {
+        const row = document.getElementById('install-app-row');
+        if (row) row.style.display = 'none';
+      }
+      return;
+    }
+    if (isIOS()) {
+      document.getElementById('install-ios-modal').style.display = 'flex';
+      return;
+    }
+    // Browser doesn't support an install prompt and isn't iOS Safari —
+    // most likely it's already installed, or the browser just doesn't
+    // support PWA installation (e.g. some in-app browsers).
+    alert("Your browser doesn't support one-tap install here. In Chrome or Edge (desktop or Android), look for \"Install app\" in the browser menu, or an install icon at the right side of the address bar.");
+  }
+
+  if (isRunningStandalone()) {
+    document.addEventListener('DOMContentLoaded', () => {
+      const row = document.getElementById('install-app-row');
+      if (row) row.style.display = 'none';
+    });
   }
 </script>
 </body>
